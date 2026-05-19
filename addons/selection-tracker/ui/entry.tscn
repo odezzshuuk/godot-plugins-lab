@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cbpdmobvempo6"]
 
-[ext_resource type="Script" uid="uid://rvsghq5w13y8" path="res://addons/selection-tracker/entry/BaseEntry.cs" id="1_quotl"]
+[ext_resource type="Script" uid="uid://bcqk2lejfobno" path="res://addons/selection-tracker/entry/EntryControl.cs" id="1_v0srd"]
 [ext_resource type="Texture2D" uid="uid://k2ge4rlr1eod" path="res://icon.svg" id="2_v0srd"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_v0srd"]
@@ -28,6 +28,10 @@ corner_radius_bottom_left = 5
 corner_detail = 20
 
 [sub_resource type="DPITexture" id="DPITexture_v0srd"]
+_source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><path fill=\"#ff5d5d\" d=\"M2 1v8.586l1.293-1.293a1 1 0 0 1 1.414 0L7 10.587l2.293-2.293a1 1 0 0 1 1.414 0L13 10.586l1-1V6H9V1H2zm8 0v4h4zm-6 9.414-2 2V15h12v-2.586l-.293.293a1 1 0 0 1-1.414 0L10 10.414l-2.293 2.293a1 1 0 0 1-1.414 0L4 10.414z\"/></svg>
+"
+
+[sub_resource type="DPITexture" id="DPITexture_pv4it"]
 _source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><path fill=\"#e0e0e0\" d=\"M10.168 8.754a5 5 0 1 0-1.414 1.414l4.316 4.316 1.414-1.414zM6 3a3 3 0 0 1 0 6 3 3 0 0 1 0-6z\"/></svg>
 "
 saturation = 2.0
@@ -37,7 +41,8 @@ Color(0.37254903, 1, 0.5921569, 1): Color(0.45, 0.95, 0.5, 1),
 Color(1, 0.8666667, 0.39607844, 1): Color(0.83, 0.78, 0.62, 1)
 }
 
-[node name="Entry" type="Control" unique_id=258251935 node_paths=PackedStringArray("_searchButton")]
+[node name="Entry" type="Control" unique_id=258251935 node_paths=PackedStringArray("_entryNameLabel", "_entryIcon", "_locateButton", "_openButton")]
+visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -46,8 +51,11 @@ offset_right = 200.0
 offset_bottom = -618.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_quotl")
-_searchButton = NodePath("RootBox/BoxMargin/HSplitContainer/ButtonContainer/Search")
+script = ExtResource("1_v0srd")
+_entryNameLabel = NodePath("RootBox/BoxMargin/HSplitContainer/EntryInfoContainer/EntryName")
+_entryIcon = NodePath("RootBox/BoxMargin/HSplitContainer/EntryInfoContainer/MarginContainer/TextureRect")
+_locateButton = NodePath("RootBox/BoxMargin/HSplitContainer/ButtonContainer/Locate")
+_openButton = NodePath("RootBox/BoxMargin/HSplitContainer/ButtonContainer/Open")
 
 [node name="RootBox" type="Panel" parent="." unique_id=874239484]
 custom_minimum_size = Vector2(100, 30)
@@ -102,7 +110,7 @@ text = "Hello Dock"
 layout_mode = 2
 size_flags_horizontal = 8
 
-[node name="Search" type="Button" parent="RootBox/BoxMargin/HSplitContainer/ButtonContainer" unique_id=2043729987]
+[node name="Open" type="Button" parent="RootBox/BoxMargin/HSplitContainer/ButtonContainer" unique_id=2043729987]
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_constants/outline_size = 1
@@ -118,4 +126,5 @@ size_flags_vertical = 4
 theme_override_constants/outline_size = 1
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_pv4it")
-text = "Locate"
+text = "Find"
+icon = SubResource("DPITexture_pv4it")

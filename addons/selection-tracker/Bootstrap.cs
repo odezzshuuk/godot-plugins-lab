@@ -24,12 +24,13 @@ public partial class Bootstrap : EditorPlugin {
   }
 
   public override void _ExitTree() {
-    EditorInterface.Singleton.GetFileSystemDock().SelectionChanged -= FileSystemSelectionChangedCallback;
-    EditorInterface.Singleton.GetSelection().SelectionChanged -= SelectionChangedCallback;
+    // In Godot, Cleanup listeners are unnecessary because the plugin will be freed when exiting the editor, but it's good practice to clean up resources.
+    // EditorInterface.Singleton.GetFileSystemDock().SelectionChanged -= FileSystemSelectionChangedCallback;
 
-    RemoveDock(_pluginDock);
+    // EditorInterface.Singleton.GetSelection().SelectionChanged -= SelectionChangedCallback;
+
     _pluginDock.QueueFree();
-
+    RemoveDock(_pluginDock);
   }
 
   private void MountDock() {
@@ -73,10 +74,13 @@ public partial class Bootstrap : EditorPlugin {
 
     if (selectedPaths.Count() > 0) {
       string path = selectedPaths[0];
+      GD.Print("Selected path: " + path);
+      if (path.Trim().EndsWith("/")) {
+        return;
+      }
       _historyEntryStore.RecordEntry(CreateFileEntry(path));
     }
 
-    GD.Print("Selected path: " + selectedPaths[0]);
   }
 
   private Entry CreateNodeEntry(Node obj) {

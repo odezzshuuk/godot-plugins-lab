@@ -77,7 +77,7 @@ public partial class EntryControl : Control {
     _locateButton.Icon = searchIcon;
     _locateButton.Text = "Find";
 
-    Texture2D openIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("FileOpen", "EditorIcons");
+    Texture2D openIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Folder", "EditorIcons");
     _openButton.Icon = openIcon;
 
   }
@@ -109,7 +109,7 @@ public partial class EntryControl : Control {
 
     if (mouseButton.ButtonIndex == MouseButton.Left) {
       if (mouseButton.DoubleClick) {
-        _entry.Open(Editor);
+        _entry.Open();
       } else {
         _entry.Locate();
       }
@@ -129,7 +129,7 @@ public partial class EntryControl : Control {
   }
 
   private void OnOpenPressed() {
-    _entry?.Open(Editor);
+    _entry?.Open();
   }
 
   private Color GetDisplayColor(RefState refState) {

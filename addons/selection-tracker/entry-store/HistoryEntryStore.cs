@@ -2,48 +2,19 @@
 // using System.Linq;
 using Godot;
 using Godot.Collections;
-using static Odezzshuuk.Editor.SelectionTracker.Constants;
 
 namespace Odezzshuuk.Editor.SelectionTracker;
-
-public interface IEntryStore {
-  Array<Entry> Entries { get; }
-  int CurrentSelectionIndex { get; set; }
-  void RecordEntry(Entry entry);
-  void RemoveEntry(Entry entry);
-}
-
-
-[Tool]
-public abstract partial class EntryStore : Resource, IEntryStore {
-
-  public static T GetStore<T>(string path) where T : EntryStore, new() {
-    if (ResourceLoader.Exists(path)) {
-      return ResourceLoader.Load<T>(path);
-    }
-    T newStore = new();
-    ResourceSaver.Save(newStore, path);
-    return newStore;
-  }
-
-  public abstract Array<Entry> Entries { get; }
-  public virtual int CurrentSelectionIndex { get; set; }
-
-  public abstract void RecordEntry(Entry entry);
-  public abstract void RemoveEntry(Entry entry);
-}
-
 
 [Tool]
 public partial class HistoryEntryStore : EntryStore {
 
-  public static HistoryEntryStore Instance { get; private set; }
-
   [Export]
   private Array<Entry> _entries = [];
+
   public override Array<Entry> Entries {
     get {
       Array<Entry> reversedEntries = _entries.Duplicate();
+      reversedEntries.Reverse();
       return reversedEntries;
     }
   }
@@ -52,6 +23,7 @@ public partial class HistoryEntryStore : EntryStore {
   private int _currentSelectionIndex = -1;
 
   public override void RecordEntry(Entry entry) {
+    GD.Print($"[{GetType().Name}]: before record entries count: {_entries.Count}");
     if (entry == null) {
       return;
     }
@@ -60,13 +32,14 @@ public partial class HistoryEntryStore : EntryStore {
       return;
     }
 
-    int existingIndex = FindIndex(entry);
-    if (existingIndex >= 0) {
-      // _entries.RemoveAt(existingIndex);
+    int existingIndex = _entries.IndexOf(entry);
+    if (existingIndex != -1) {
       _entries.RemoveAt(existingIndex);
     }
 
     _entries.Add(entry);
+    GD.Print($"[{GetType().Name}]: Recording entry '{entry.DisplayName}'");
+    GD.Print($"[{GetType().Name}]: after record entries count: {_entries.Count}");
 
     while (_entries.Count > _sizeLimit) {
       _entries.RemoveAt(0);
@@ -77,7 +50,7 @@ public partial class HistoryEntryStore : EntryStore {
   }
 
   public override void RemoveEntry(Entry entry) {
-    int existingIndex = FindIndex(entry);
+    int existingIndex = _entries.IndexOf(entry);
     if (existingIndex < 0) {
       return;
     }
@@ -129,23 +102,6 @@ public partial class HistoryEntryStore : EntryStore {
 
   public void ResetCurrentSelection() {
     _currentSelectionIndex = -1;
-  }
-
-
-  private int FindIndex(Entry entry) {
-    for (int index = 0; index < _entries.Count; index++) {
-      if (_entries[index]?.Equals(entry) == true) {
-        return index;
-      }
-    }
-
-    return -1;
-  }
-
-  private void Save() {
-    if (ResourceSaver.Save(this, HISTORY_SELECTION_PATH) != Error.Ok) {
-      GD.PushError($"Failed to save history entry store to '{HISTORY_SELECTION_PATH}'");
-    }
   }
 }
 

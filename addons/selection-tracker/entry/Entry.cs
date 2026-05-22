@@ -39,8 +39,7 @@ public partial class Entry : Resource, IEquatable<Entry> {
 
   protected GodotObject _cachedRef;
 
-  public GodotObject Ref => ResolveReference();
-  public virtual string DisplayName => "unknown";
+  public virtual string DisplayName => _cachedName ?? $"Unnamed {GetType().Name}" ?? "Empty";
   public Texture2D Icon => _cachedIcon;
 
   public virtual RefState CurrentRefState => RefState.Unknown;
@@ -56,13 +55,6 @@ public partial class Entry : Resource, IEquatable<Entry> {
       return false;
     }
 
-    GodotObject thisRef = ResolveReference();
-    GodotObject otherRef = other.ResolveReference();
-
-    if (thisRef != null ^ otherRef != null) {
-      return false;
-    }
-
     // if (thisRef == null && otherRef == null) {
     //   return _instanceId == other._instanceId
     //     && string.Equals(_scenePath, other._scenePath, StringComparison.Ordinal)
@@ -71,7 +63,7 @@ public partial class Entry : Resource, IEquatable<Entry> {
     //     && _resourceUid == other._resourceUid;
     // }
 
-    return thisRef.GetInstanceId() == otherRef.GetInstanceId();
+    return true;
   }
 
   public override bool Equals(object obj) {
@@ -90,26 +82,6 @@ public partial class Entry : Resource, IEquatable<Entry> {
 
   public virtual GodotObject ResolveReference() { return null; }
 
-  protected static string GetScenePath(Node node) {
-    if (!string.IsNullOrEmpty(node.SceneFilePath)) {
-      return node.SceneFilePath;
-    }
 
-    Node current = node;
-    while (current.GetParent() != null) {
-      current = current.GetParent();
-      if (!string.IsNullOrEmpty(current.SceneFilePath)) {
-        return current.SceneFilePath;
-      }
-    }
-
-    return string.Empty;
-  }
-
-  protected static long GetResourceUid(string resourcePath) {
-    return string.IsNullOrEmpty(resourcePath)
-      ? -1
-      : ResourceLoader.GetResourceUid(resourcePath);
-  }
 }
 #endif

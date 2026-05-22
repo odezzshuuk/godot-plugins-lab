@@ -23,15 +23,8 @@ public partial class NodeEntry : Entry {
 
   private Node _cachedNode;
 
-  public NodeEntry() { }
 
-  public NodeEntry(Node node) {
-    _cachedNode = node;
-    _cachedNodePath = node.IsInsideTree() ? node.GetPath() : string.Empty;
-    _cachedScenePath = GetScenePath(node);
-  }
-
-  public override string DisplayName => _cachedNode.Name;
+  public override string DisplayName => _cachedNode?.Name ?? "Empty";
 
   public override RefState CurrentRefState {
     get {
@@ -47,6 +40,12 @@ public partial class NodeEntry : Entry {
     }
   }
 
+  public NodeEntry() { }
+
+  public NodeEntry(Node node) {
+    CacheNodeInfo(node);
+  }
+
   public override void Locate() {
     if (_cachedNode == null) {
       return;
@@ -59,7 +58,12 @@ public partial class NodeEntry : Entry {
       return false;
     }
 
-    return false;
+    if (other is not NodeEntry otherNodeEntry) {
+      return false;
+    }
+
+    return otherNodeEntry._cachedNode == _cachedNode ||
+      otherNodeEntry._instanceId == _instanceId;
   }
 
   public override void Open() {
@@ -82,12 +86,27 @@ public partial class NodeEntry : Entry {
     return _instanceId.GetHashCode();
   }
 
-  protected void CachedNodeInfo(Node node) {
+  protected void CacheNodeInfo(Node node) {
     _cachedNode = node;
     _cachedNodePath = node.IsInsideTree() ? node.GetPath() : string.Empty;
     _cachedScenePath = GetScenePath(node);
     _cachedScene = node.Owner;
     _cachedIcon = EditorInterface.Singleton.GetBaseControl().GetThemeIcon("File", "EditorIcons");
+  }
+
+  protected string GetScenePath(Node node) {
+    if (!string.IsNullOrEmpty(node.SceneFilePath)) {
+      return node.SceneFilePath;
+    }
+
+    Node current = node;
+    while (current.GetParent() != null) {
+      current = current.GetParent();
+      if (!string.IsNullOrEmpty(current.SceneFilePath)) {
+        return current.SceneFilePath;
+      }
+    }
+    return string.Empty;
   }
 
 }

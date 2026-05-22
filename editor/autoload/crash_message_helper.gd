@@ -24,4 +24,3 @@ func _ready() -> void:
     if crash_begin_idx != -1:
         print("===== Previous Session Crashed Backtrace =====\n")
         print(last_log_contents.substr(crash_begin_idx))
-

@@ -16,19 +16,35 @@ public partial class HistoryWindowControl : Control {
   [Export]
   private Node _entryContainer;
 
-  private EntryStore _entryStore;
+  [Export]
+  private PopupMenu _contextMenu;
+
+  private HistoryEntryStore _entryStore;
 
   public override void _EnterTree() {
-    foreach (Node child in _entryContainer.GetChildren()) {
-      child.QueueFree();
-    }
-
     _entryStore = EntryStore.GetStore<HistoryEntryStore>(HISTORY_SELECTION_PATH);
     _entryStore.Changed += StoreChangedCallback;
+    _contextMenu.IdPressed += id => {
+      GD.Print($"Context menu item with id {id} pressed");
+      // Handle context menu actions based on the id
+    };
+    LoadEntries();
+
   }
 
   public override void _ExitTree() {
     _entryStore.Changed -= StoreChangedCallback;
+  }
+
+  public override void _GuiInput(InputEvent @event) {
+    if (@event is InputEventMouseButton mouseEvent) {
+      if (mouseEvent.ButtonIndex == MouseButton.Right && mouseEvent.Pressed) {
+        GD.Print("Right click event handled in HistoryWindowControl");
+        _contextMenu.Position = DisplayServer.MouseGetPosition();
+        _contextMenu.Popup();
+        AcceptEvent();
+      }
+    }
   }
 
   private void StoreChangedCallback() {
@@ -74,6 +90,25 @@ public partial class HistoryWindowControl : Control {
 
   private bool PassFilter() {
     return false;
+  }
+
+  private void ClearEntries() {
+    _entryStore.RemoveAll();
+  }
+
+  private void ContextMenuPressedCallbac(long id) {
+    switch (id) {
+      case 0:
+        ClearEntries();
+        break;
+      case 1:
+        GD.Print("Option 1 selected");
+        break;
+      default:
+        GD.Print($"Unknown context menu item with id {id} pressed");
+        break;
+    }
+
   }
 
 

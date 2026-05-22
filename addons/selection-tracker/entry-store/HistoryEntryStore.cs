@@ -23,7 +23,6 @@ public partial class HistoryEntryStore : EntryStore {
   private int _currentSelectionIndex = -1;
 
   public override void RecordEntry(Entry entry) {
-    GD.Print($"[{GetType().Name}]: before record entries count: {_entries.Count}");
     if (entry == null) {
       return;
     }
@@ -33,13 +32,12 @@ public partial class HistoryEntryStore : EntryStore {
     }
 
     int existingIndex = _entries.IndexOf(entry);
+    GD.Print($"[{GetType().Name}]: existing index: {existingIndex}");
     if (existingIndex != -1) {
       _entries.RemoveAt(existingIndex);
     }
 
     _entries.Add(entry);
-    GD.Print($"[{GetType().Name}]: Recording entry '{entry.DisplayName}'");
-    GD.Print($"[{GetType().Name}]: after record entries count: {_entries.Count}");
 
     while (_entries.Count > _sizeLimit) {
       _entries.RemoveAt(0);

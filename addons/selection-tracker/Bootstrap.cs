@@ -18,6 +18,7 @@ public partial class Bootstrap : EditorPlugin {
     MountDock();
 
     _historyEntryStore = EntryStore.GetStore<HistoryEntryStore>(HISTORY_SELECTION_PATH);
+    GD.Print($"[{GetType().Name}] HistoryEntryStore loaded with {_historyEntryStore.Entries.Count} entries.");
     EditorInterface.Singleton.GetFileSystemDock().SelectionChanged += FileSystemSelectionChangedCallback;
     EditorInterface.Singleton.GetSelection().SelectionChanged += SelectionChangedCallback;
 
@@ -28,14 +29,21 @@ public partial class Bootstrap : EditorPlugin {
     // EditorInterface.Singleton.GetFileSystemDock().SelectionChanged -= FileSystemSelectionChangedCallback;
 
     // EditorInterface.Singleton.GetSelection().SelectionChanged -= SelectionChangedCallback;
+    if (_pluginDock != null) {
+      RemoveDock(_pluginDock);
+      _pluginDock.QueueFree();
+      _pluginDock = null;
+    }
 
-    _pluginDock.QueueFree();
-    RemoveDock(_pluginDock);
+    _historyEntryStore = null;
+
   }
 
   private void MountDock() {
     // Initialization of the plugin goes here.
     Control _dock_scene = GD.Load<PackedScene>(MAIN_PANEL_RESOURCE_PATH).Instantiate<Control>();
+
+    PluginHandle.Instance.IsActive = true;
 
     _pluginDock = new EditorDock();
     _pluginDock.AddChild(_dock_scene);
@@ -91,10 +99,6 @@ public partial class Bootstrap : EditorPlugin {
   private Entry CreateFileEntry(string path) {
     FileEntry entry = new(path);
     return entry;
-  }
-
-  private void InitializeResource() {
-
   }
 }
 #endif

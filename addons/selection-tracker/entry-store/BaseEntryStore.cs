@@ -1,6 +1,7 @@
 #if TOOLS
 using Godot;
 using Godot.Collections;
+using System;
 
 namespace Odezzshuuk.Editor.SelectionTracker;
 
@@ -44,6 +45,16 @@ public abstract partial class EntryStore : Resource, IEntryStore {
       GD.PushError($"Failed to save history entry store to '{_storePath}'");
     }
 
+  }
+
+  private int FindEntryIndex<[MustBeVariant] T>(Array<T> entries, IEquatable<T> entry) {
+    for (int index = 0; index < entries.Count; index++) {
+      if (entries[index]?.Equals(entry) == true) {
+        return index;
+      }
+    }
+
+    return -1;
   }
 }
 

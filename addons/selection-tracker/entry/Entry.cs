@@ -5,20 +5,21 @@ using System;
 namespace Odezzshuuk.Editor.SelectionTracker;
 
 [Flags]
-public enum RefState {
+public enum EntryState {
   Node = 1 << 0,
-  Resource = 1 << 1,
-  Scene = 1 << 2,
+  File = 1 << 1,
 
-  Loaded = (1 << 4) | Node,
-  Unloaded = (1 << 5) | Node,
+  Accessible = 1 << 4,
+  Unaccessible = 1 << 5,
+
+  Loaded = Accessible | Node,
+  Unloaded = Unaccessible | Node,
   Freed = (1 << 6) | Node,
   Playing = (1 << 7) | Node,
 
-  Deleted = 1 << 8,
+  Existed = Accessible | File,
 
-  Instanced = Loaded | Scene,
-  External = Unloaded | Scene,
+  Deleted = 1 << 8,
 
   Unknown = 0,
   All = ~0,
@@ -35,43 +36,35 @@ public partial class Entry : Resource, IEquatable<Entry> {
   [Export] protected string _cachedName;
 
   [Export] protected Texture2D _cachedIcon;
-  [Export] protected RefState _cachedRefState = RefState.Unknown;
+  [Export] protected EntryState _cachedRefState = EntryState.Unknown;
 
-  protected GodotObject _cachedRef;
 
   public virtual string DisplayName => _cachedName ?? $"Unnamed {GetType().Name}" ?? "Empty";
   public Texture2D Icon => _cachedIcon;
 
-  public virtual RefState CurrentRefState => RefState.Unknown;
+  public virtual EntryState CurrentEntryState => EntryState.Unknown;
 
   public Entry() { }
 
-  public virtual bool Equals(Entry other) {
-    if (other is null) {
-      return false;
-    }
-
-    if (!ReferenceEquals(this, other)) {
-      return false;
-    }
-
-    // if (thisRef == null && otherRef == null) {
-    //   return _instanceId == other._instanceId
-    //     && string.Equals(_scenePath, other._scenePath, StringComparison.Ordinal)
-    //     && string.Equals(_nodePath, other._nodePath, StringComparison.Ordinal)
-    //     && string.Equals(_resourcePath, other._resourcePath, StringComparison.Ordinal)
-    //     && _resourceUid == other._resourceUid;
-    // }
-
-    return true;
-  }
 
   public override bool Equals(object obj) {
     return obj is Entry other && Equals(other);
   }
 
   public override int GetHashCode() {
-    return 0;
+    return HashCode.Combine(_cachedName);
+  }
+
+  public virtual bool Equals(Entry other) {
+    if (other is null) {
+      return false;
+    }
+
+    if (ReferenceEquals(this, other)) {
+      return true;
+    }
+
+    return other.GetType() == GetType();
   }
 
   public virtual void Locate() { }

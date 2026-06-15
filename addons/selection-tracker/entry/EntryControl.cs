@@ -1,19 +1,19 @@
 #if TOOLS
 using Godot;
+using System;
 
 namespace Odezzshuuk.Editor.SelectionTracker;
+
 
 [Tool]
 public partial class EntryControl : Control {
 
-  [Signal] public delegate void RemoveRequestedEventHandler(Entry entry);
-  [Signal] public delegate void FavoriteToggledEventHandler(Entry entry, bool isFavorite);
-
   [ExportGroup("References")]
-  [Export] private Label _entryNameLabel;
+  [Export] private RichTextLabel _entryNameLabel;
   [Export] private TextureRect _entryIcon;
   [Export] private Button _locateButton;
   [Export] private Button _openButton;
+  [Export] private PopupMenu _contextMenu;
 
   [ExportGroup("Style")]
   [Export] private Color _loadedColor = Colors.White;
@@ -21,9 +21,13 @@ public partial class EntryControl : Control {
   [Export] private Color _deletedColor = new(0.92f, 0.42f, 0.42f);
   [Export] private Color _defaultColor = Colors.White;
   [Export] private bool _showFavorites = true;
-  [Export] private bool _hideOpenForNodes = true;
 
+  // [Export]
   private Entry _entry;
+
+  private EntryStore _entryStore;
+
+  private readonly PopupMenuHelper _popupMenuHelper = new();
 
   public int Index { get; set; }
 
@@ -33,80 +37,90 @@ public partial class EntryControl : Control {
 
   public Entry Entry {
     get => _entry;
-    set => SetupEntry(value);
+    set => BindEntry(value);
   }
 
   public override void _EnterTree() {
-    ConnectUi();
-    ApplyStaticUi();
-    SetupEntry(_entry);
+    if (!PluginHandle.Instance.IsActive) {
+      return;
+    }
+    _locateButton.Pressed += OnPingPressed;
+    _openButton.Pressed += OnOpenPressed;
+
+    Texture2D searchIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Search", "EditorIcons");
+    _locateButton.Icon = searchIcon;
+
+    Texture2D openIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Folder", "EditorIcons");
+    _openButton.Icon = openIcon;
+
+    _contextMenu.Clear();
+    _popupMenuHelper.AddItem("Remove", () => GD.Print($"Requesting removal of entry: {_entry.DisplayName}"))
+                    .AddItem("Option 1", () => GD.Print("Option 1 selected"))
+                    .AddItem("Option 2", () => GD.Print("Option 2 selected"))
+                    .AddSeparator()
+                    .AddItem("Remove All", () => {
+                      GD.Print($"[{GetType().Name}] Owner: {Owner?.Name}(OwnerType: {Owner?.GetType().Name})");
+                      HistoryWindowControl control = Owner.GetNodeOrNull<HistoryWindowControl>(".");
+                      control?.ClearEntries();
+                    })
+                    .ApplyTo(_contextMenu);
+    _contextMenu.IdPressed += _popupMenuHelper.IsPressedCallback;
+
   }
 
   public override void _ExitTree() {
-    DisconnectUi();
+    try {
+
+      _locateButton.Pressed -= OnPingPressed;
+      _openButton.Pressed -= OnOpenPressed;
+      _contextMenu.IdPressed -= _popupMenuHelper.IsPressedCallback;
+    } catch (Exception ex) {
+      GD.PrintErr($"[{GetType().Name}] Error during cleanup: {ex.Message}");
+    }
+  }
+
+  public override void _GuiInput(InputEvent @event) {
+    GUIInputCallback(@event);
   }
 
   public void Reset() {
     Entry = null;
   }
 
-
-  private void ConnectUi() {
-    if (_locateButton != null) {
-      _locateButton.Pressed += OnPingPressed;
-    }
-
-    if (_openButton != null) {
-      _openButton.Pressed += OnOpenPressed;
-    }
-  }
-
-  private void DisconnectUi() {
-    if (_locateButton != null) {
-      _locateButton.Pressed -= OnPingPressed;
-    }
-
-    if (_openButton != null) {
-      _openButton.Pressed -= OnOpenPressed;
-    }
-  }
-
-  private void ApplyStaticUi() {
-
-    Texture2D searchIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Search", "EditorIcons");
-    _locateButton.Icon = searchIcon;
-    _locateButton.Text = "Find";
-
-    Texture2D openIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Folder", "EditorIcons");
-    _openButton.Icon = openIcon;
-
-  }
-
-  private void SetupEntry(Entry value) {
+  private void BindEntry(Entry value) {
     _entry = value;
 
     if (_entry == null) {
-      Visible = false;
+      _entryNameLabel.Text = string.Empty;
+      _entryIcon.Texture = null;
+      _entryIcon.Visible = false;
+      _openButton.Visible = false;
       return;
     }
 
-    Visible = true;
-
-    _entryNameLabel.Text = _entry.DisplayName;
-    _entryNameLabel.Modulate = GetDisplayColor(_entry.CurrentRefState);
-
+    SetTextStyle();
     _entryIcon.Texture = _entry.Icon;
     _entryIcon.Visible = _entry.Icon != null;
 
-    bool hideOpen = _hideOpenForNodes && _entry.CurrentRefState.HasFlag(RefState.Node);
-    _openButton.Visible = !hideOpen;
+    GD.Print($"Binding entry: {_entry.DisplayName} with state: {_entry.CurrentEntryState}");
+    bool hideOpen = _entry.CurrentEntryState.HasFlag(EntryState.Accessible);
+    _openButton.Visible = hideOpen;
   }
 
-  private void OnInfoGuiInput(InputEvent @event) {
+  private void AppendPopupMenu(PopupMenu menu) {
+    menu.AddItem("Remove");
+    menu.AddItem("Option 1");
+    menu.AddItem("Option 2");
+    menu.AddSeparator();
+    menu.AddItem("Remove All");
+  }
+
+  private void GUIInputCallback(InputEvent @event) {
     if (_entry == null || @event is not InputEventMouseButton mouseButton || !mouseButton.Pressed) {
       return;
     }
 
+    GD.Print($"Mouse Pressed input event: {@event} triggered");
     if (mouseButton.ButtonIndex == MouseButton.Left) {
       if (mouseButton.DoubleClick) {
         _entry.Open();
@@ -119,7 +133,9 @@ public partial class EntryControl : Control {
     }
 
     if (mouseButton.ButtonIndex == MouseButton.Right) {
-      EmitSignal(SignalName.RemoveRequested, _entry);
+      GD.Print($"Right-clicked on entry: {_entry.DisplayName}");
+      _contextMenu.Position = DisplayServer.MouseGetPosition();
+      _contextMenu.Popup();
       AcceptEvent();
     }
   }
@@ -132,20 +148,26 @@ public partial class EntryControl : Control {
     _entry?.Open();
   }
 
-  private Color GetDisplayColor(RefState refState) {
-    if (refState.HasFlag(RefState.Deleted) || refState.HasFlag(RefState.Freed)) {
-      return _deletedColor;
+  private void SetTextStyle() {
+    GD.Print($"TextStyle entry is null: {_entry == null}");
+
+    EntryState state = _entry
+      .CurrentEntryState;
+
+    if (state.HasFlag(EntryState.Deleted) || state.HasFlag(EntryState.Freed)) {
+      _entryNameLabel.Modulate = _deletedColor;
+      _entryNameLabel.Text = $"[s]{_entry.DisplayName}[/s]";
     }
 
-    if (refState.HasFlag(RefState.Unloaded) || refState.HasFlag(RefState.External)) {
-      return _unloadedColor;
+    if (state.HasFlag(EntryState.Unaccessible)) {
+      _entryNameLabel.Modulate = _unloadedColor;
+      _entryNameLabel.Text = _entry.DisplayName;
     }
 
-    if (refState.HasFlag(RefState.Loaded) || refState.HasFlag(RefState.Instanced) || refState.HasFlag(RefState.Resource)) {
-      return _loadedColor;
+    if (state.HasFlag(EntryState.Accessible)) {
+      _entryNameLabel.Modulate = _loadedColor;
+      _entryNameLabel.Text = _entry.DisplayName;
     }
-
-    return _defaultColor;
   }
 }
 #endif

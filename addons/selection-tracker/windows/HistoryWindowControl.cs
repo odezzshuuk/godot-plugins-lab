@@ -1,5 +1,6 @@
 #if TOOLS
 using Godot;
+using System;
 using static Odezzshuuk.Editor.SelectionTracker.Constants;
 
 namespace Odezzshuuk.Editor.SelectionTracker;
@@ -21,25 +22,43 @@ public partial class HistoryWindowControl : Control {
 
   private HistoryEntryStore _entryStore;
 
+  private readonly PopupMenuHelper _popupMenuHelper = new();
+
+  public (int id, string text, bool isSeparator, Action callback)[] ContextMenuItems { get; private set; }
+
   public override void _EnterTree() {
+    if (!PluginHandle.Instance.IsActive) {
+      return;
+    }
+
     _entryStore = EntryStore.GetStore<HistoryEntryStore>(HISTORY_SELECTION_PATH);
     _entryStore.Changed += StoreChangedCallback;
-    _contextMenu.IdPressed += id => {
-      GD.Print($"Context menu item with id {id} pressed");
-      // Handle context menu actions based on the id
-    };
+
     LoadEntries();
 
+    _contextMenu.Clear();
+    _popupMenuHelper.AddItem("Remove Deleted", () => GD.Print("Remove Deleted callback invoked"))
+                    .AddItem("Remove All", _entryStore.RemoveAll)
+                    .ApplyTo(_contextMenu);
+    _contextMenu.IdPressed += _popupMenuHelper.IsPressedCallback;
   }
 
   public override void _ExitTree() {
-    _entryStore.Changed -= StoreChangedCallback;
+    if (!PluginHandle.Instance.IsActive) {
+      return;
+    }
+
+    try {
+      _entryStore.Changed -= StoreChangedCallback;
+      _contextMenu.IdPressed -= _popupMenuHelper.IsPressedCallback;
+    } catch (Exception ex) {
+      GD.PrintErr($"[{GetType().Name}] Error during cleanup: {ex.Message}");
+    }
   }
 
   public override void _GuiInput(InputEvent @event) {
     if (@event is InputEventMouseButton mouseEvent) {
       if (mouseEvent.ButtonIndex == MouseButton.Right && mouseEvent.Pressed) {
-        GD.Print("Right click event handled in HistoryWindowControl");
         _contextMenu.Position = DisplayServer.MouseGetPosition();
         _contextMenu.Popup();
         AcceptEvent();
@@ -47,18 +66,18 @@ public partial class HistoryWindowControl : Control {
     }
   }
 
-  private void StoreChangedCallback() {
-    LoadEntries();
+  public void ClearEntries() {
+    _entryStore.RemoveAll();
   }
 
   private void LoadEntries() {
     int entryCounter = 0;
-    int elementCount = _entryContainer.GetChildren().Count;
+    int entryNodeCount = _entryContainer.GetChildren().Count;
 
-    GD.Print("entries count: " + _entryStore.Entries.Count);
+    GD.Print($"Loading entries: EntryCount={_entryStore.Entries.Count}, ExistingEntryNodes={entryNodeCount}");
 
     foreach (Entry entry in _entryStore.Entries) {
-      if (entryCounter < elementCount) {
+      if (entryCounter < entryNodeCount) {
         // reuse existing entry node
         Node entryNode = _entryContainer.GetChild(entryCounter);
         EntryControl control = entryNode.GetNodeOrNull<EntryControl>(".");
@@ -67,17 +86,16 @@ public partial class HistoryWindowControl : Control {
         // create new entry node
         Node entryNode = _entryTemplate.Instantiate();
         _entryContainer.AddChild(entryNode);
+        entryNode.Owner = this;
         EntryControl control = entryNode.GetNodeOrNull<EntryControl>(".");
         control.Entry = entry;
       }
       entryCounter++;
     }
-    GD.Print("counter: " + entryCounter);
-    GD.Print("element count: " + elementCount);
 
-    if (entryCounter < elementCount) {
+    if (entryCounter < entryNodeCount) {
       // remove extra entry nodes
-      for (int index = elementCount - 1; index >= entryCounter; index--) {
+      for (int index = entryNodeCount - 1; index >= entryCounter; index--) {
         Node entryNode = _entryContainer.GetChild(index);
         entryNode.QueueFree();
       }
@@ -92,27 +110,8 @@ public partial class HistoryWindowControl : Control {
     return false;
   }
 
-  private void ClearEntries() {
-    _entryStore.RemoveAll();
+  private void StoreChangedCallback() {
+    LoadEntries();
   }
-
-  private void ContextMenuPressedCallbac(long id) {
-    switch (id) {
-      case 0:
-        ClearEntries();
-        break;
-      case 1:
-        GD.Print("Option 1 selected");
-        break;
-      default:
-        GD.Print($"Unknown context menu item with id {id} pressed");
-        break;
-    }
-
-  }
-
-
-  // private void  
-
 }
 #endif

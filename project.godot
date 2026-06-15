@@ -30,6 +30,10 @@ window/size/viewport_width=250
 
 project/assembly_name="godot-plugins-lab"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/selection-tracker/plugin.cfg")
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

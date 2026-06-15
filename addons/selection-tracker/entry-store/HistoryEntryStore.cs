@@ -2,6 +2,7 @@
 // using System.Linq;
 using Godot;
 using Godot.Collections;
+using System;
 
 namespace Odezzshuuk.Editor.SelectionTracker;
 
@@ -23,6 +24,7 @@ public partial class HistoryEntryStore : EntryStore {
   private int _currentSelectionIndex = -1;
 
   public override void RecordEntry(Entry entry) {
+    GD.Print($"Recording entry: {entry?.DisplayName}");
     if (entry == null) {
       return;
     }
@@ -31,8 +33,7 @@ public partial class HistoryEntryStore : EntryStore {
       return;
     }
 
-    int existingIndex = _entries.IndexOf(entry);
-    GD.Print($"[{GetType().Name}]: existing index: {existingIndex}");
+    int existingIndex = FindEntryIndex(entry);
     if (existingIndex != -1) {
       _entries.RemoveAt(existingIndex);
     }
@@ -48,7 +49,7 @@ public partial class HistoryEntryStore : EntryStore {
   }
 
   public override void RemoveEntry(Entry entry) {
-    int existingIndex = _entries.IndexOf(entry);
+    int existingIndex = FindEntryIndex(entry);
     if (existingIndex < 0) {
       return;
     }
@@ -100,6 +101,16 @@ public partial class HistoryEntryStore : EntryStore {
 
   public void ResetCurrentSelection() {
     _currentSelectionIndex = -1;
+  }
+
+  private int FindEntryIndex<T>(IEquatable<T> entry) {
+    for (int index = 0; index < _entries.Count; index++) {
+      if (_entries[index]?.Equals(entry) == true) {
+        return index;
+      }
+    }
+
+    return -1;
   }
 }
 

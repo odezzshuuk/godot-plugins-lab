@@ -1,5 +1,7 @@
 #if TOOLS
 using Godot;
+using System;
+using System.Linq;
 
 namespace Odezzshuuk.Editor.SelectionTracker;
 
@@ -9,34 +11,38 @@ public partial class NodeEntry : Entry {
   [Export]
   private string _cachedNodePath;
   [Export]
-  private string _cachedSceneName;
+  private string _cachedSceneFileName;
   [Export]
   private string _cachedScenePath;
 
   [Export]
-  protected ulong _instanceId;
+  protected ulong _instanceId;  // session-only
 
   [Export]
   protected string _cachedNodeType;
 
   private Node _cachedScene;
-
   private Node _cachedNode;
 
+  public override string DisplayName => _cachedNode.Name != string.Empty
+    ? _cachedNode.Name
+    : _cachedName != string.Empty
+      ? _cachedName
+      : $"Missing Node ({_cachedNodeType})";
 
-  public override string DisplayName => _cachedNode?.Name ?? "Empty";
-
-  public override RefState CurrentRefState {
+  public override EntryState CurrentEntryState {
     get {
-      if (_cachedNode == null) {
-        return RefState.Unloaded;
+      GD.Print($"Checking entry state for NodeEntry: {_cachedNode.Name}");
+      if (!_cachedNode.IsQueuedForDeletion()) {
+        GD.Print($"Node {_cachedNode.Name} is no longer valid. Marking as Deleted.");
+        return EntryState.Deleted;
       }
 
-      if (!_cachedNode.IsInsideTree()) {
-        return RefState.Freed;
+      if (EditorInterface.Singleton.GetOpenScenes().Contains(_cachedScenePath)) {
+        return EntryState.Loaded;
+      } else {
+        return EntryState.Unloaded;
       }
-
-      return RefState.Loaded;
     }
   }
 
@@ -46,12 +52,6 @@ public partial class NodeEntry : Entry {
     CacheNodeInfo(node);
   }
 
-  public override void Locate() {
-    if (_cachedNode == null) {
-      return;
-    }
-    EditorInterface.Singleton.EditNode(_cachedNode);
-  }
 
   public override bool Equals(Entry other) {
     if (!base.Equals(other)) {
@@ -66,13 +66,24 @@ public partial class NodeEntry : Entry {
       otherNodeEntry._instanceId == _instanceId;
   }
 
+  public override int GetHashCode() {
+    return HashCode.Combine(_cachedNodePath);
+  }
+
+  public override void Locate() {
+    if (_cachedNode == null) {
+      return;
+    }
+    EditorInterface.Singleton.EditNode(_cachedNode);
+  }
+
   public override void Open() {
     EditorInterface editor = EditorInterface.Singleton;
-    if (CurrentRefState.HasFlag(RefState.Loaded)) {
+    if (CurrentEntryState.HasFlag(EntryState.Loaded)) {
 
     }
 
-    if (CurrentRefState.HasFlag(RefState.Unloaded)) {
+    if (CurrentEntryState.HasFlag(EntryState.Unloaded)) {
       editor.OpenSceneFromPath(_cachedScenePath);
       // TODO: restore node here ...
       editor.GetSelection().Clear();
@@ -82,16 +93,16 @@ public partial class NodeEntry : Entry {
     }
   }
 
-  public override int GetHashCode() {
-    return _instanceId.GetHashCode();
-  }
-
   protected void CacheNodeInfo(Node node) {
     _cachedNode = node;
     _cachedNodePath = node.IsInsideTree() ? node.GetPath() : string.Empty;
     _cachedScenePath = GetScenePath(node);
+    _cachedSceneFileName = _cachedScenePath.GetFile();
     _cachedScene = node.Owner;
+    _cachedName = string.Concat(_cachedSceneFileName, "/", node.Name);
+    _cachedNodeType = node.GetType().Name;
     _cachedIcon = EditorInterface.Singleton.GetBaseControl().GetThemeIcon("File", "EditorIcons");
+    _instanceId = node.GetInstanceId();
   }
 
   protected string GetScenePath(Node node) {

@@ -1,7 +1,7 @@
 #if TOOLS
-using System.Linq;
 using Godot;
 using Godot.Collections;
+using System.Linq;
 using static Odezzshuuk.Editor.SelectionTracker.Constants;
 
 namespace Odezzshuuk.Editor.SelectionTracker;
@@ -12,47 +12,70 @@ public partial class Bootstrap : EditorPlugin {
   private EditorDock _pluginDock;
   private FileSystemDock _fileSystemDock;
 
-  private HistoryEntryStore _historyEntryStore;
+  private SelectionEntryContainer _container;
+
+  private PackedScene _panelPackedScene;
+  private PackedScene _containerPackedScene;
+
+  private readonly PluginHandle _pluginHandle = PluginHandle.Instance;
 
   public override void _EnterTree() {
-    MountDock();
+    using (DirAccess dir = DirAccess.Open(PLUGIN_DIR_PATH)) {
+      if (dir == null) {
+        DirAccess.MakeDirRecursiveAbsolute(PLUGIN_DIR_PATH);
+      }
+    }
 
-    _historyEntryStore = EntryStore.GetStore<HistoryEntryStore>(HISTORY_SELECTION_PATH);
-    GD.Print($"[{GetType().Name}] HistoryEntryStore loaded with {_historyEntryStore.Entries.Count} entries.");
-    EditorInterface.Singleton.GetFileSystemDock().SelectionChanged += FileSystemSelectionChangedCallback;
-    EditorInterface.Singleton.GetSelection().SelectionChanged += SelectionChangedCallback;
+    SetupPanel();
+    SetupContainer();
 
+    // EditorInterface.Singleton.GetFileSystemDock().SelectionChanged += FileSystemSelectionChangedCallback;
+    // EditorInterface.Singleton.GetSelection().SelectionChanged += SelectionChangedCallback;
   }
 
   public override void _ExitTree() {
     // In Godot, Cleanup listeners are unnecessary because the plugin will be freed when exiting the editor, but it's good practice to clean up resources.
     // EditorInterface.Singleton.GetFileSystemDock().SelectionChanged -= FileSystemSelectionChangedCallback;
-
     // EditorInterface.Singleton.GetSelection().SelectionChanged -= SelectionChangedCallback;
-    if (_pluginDock != null) {
-      RemoveDock(_pluginDock);
-      _pluginDock.QueueFree();
-      _pluginDock = null;
+
+    Error res = _containerPackedScene.Pack(_container);
+    if (res == Error.Ok) {
+      res = ResourceSaver.Save(_containerPackedScene, SELECTION_ENTRIES_INSTANCE_PATH);
     }
-
-    _historyEntryStore = null;
-
   }
 
-  private void MountDock() {
+  private void SetupPanel() {
+
     // Initialization of the plugin goes here.
-    Control _dock_scene = GD.Load<PackedScene>(MAIN_PANEL_RESOURCE_PATH).Instantiate<Control>();
+    // if (ResourceLoader.Exists(MAIN_PANEL_INSTANCE_PATH)) {
+    //   _panelPackedScene = ResourceLoader.Load<PackedScene>(MAIN_PANEL_INSTANCE_PATH);
+    // } else {
+    //   // Load Template Scene, instantiate it, pack it again and save it to new path
+    //   _panelPackedScene = Utils.InstantiateTemplateScene(MAIN_PANEL_TEMPLATE_PATH, MAIN_PANEL_INSTANCE_PATH);
+    // }
+    //
+    // _pluginHandle.panelNode = _panelPackedScene.Instantiate();
+    //
+    // _pluginDock = new EditorDock();
+    // _pluginDock.AddChild(_pluginHandle.panelNode);
+    // _pluginDock.Title = "Selections Tracker";
+    //
+    // _pluginDock.DefaultSlot = EditorDock.DockSlot.Bottom;
+    // _pluginDock.AvailableLayouts = EditorDock.DockLayout.Horizontal | EditorDock.DockLayout.Floating;
+    //
+    // AddDock(_pluginDock);
+  }
 
-    PluginHandle.Instance.IsActive = true;
+  private void SetupContainer() {
+    if (ResourceLoader.Exists(SELECTION_ENTRIES_INSTANCE_PATH)) {
+      _containerPackedScene = ResourceLoader.Load<PackedScene>(SELECTION_ENTRIES_INSTANCE_PATH);
+    } else {
+      // Load Template Scene, instantiate it, pack it again and save it to new path
+      _containerPackedScene = Utils.InstantiateTemplateScene(SELECTION_ENTRIES_TEMPLATE_PATH, SELECTION_ENTRIES_INSTANCE_PATH);
+    }
 
-    _pluginDock = new EditorDock();
-    _pluginDock.AddChild(_dock_scene);
-    _pluginDock.Title = "Selection Tracker";
-
-    _pluginDock.DefaultSlot = EditorDock.DockSlot.Bottom;
-    _pluginDock.AvailableLayouts = EditorDock.DockLayout.Horizontal | EditorDock.DockLayout.Floating;
-
-    AddDock(_pluginDock);
+    _pluginHandle.containerNode = _containerPackedScene.Instantiate<Control>();
+    _container = _pluginHandle.containerNode.GetNode<SelectionEntryContainer>(".");
   }
 
   private void SelectionChangedCallback() {
@@ -62,7 +85,7 @@ public partial class Bootstrap : EditorPlugin {
     Array<Node> selectedNodes = editor.GetSelection().GetSelectedNodes();
     if (selectedNodes.Count > 0) {
       res = selectedNodes[0];
-      _historyEntryStore.RecordEntry(CreateNodeEntry(selectedNodes[0]));
+      _container.RecordEntry(CreateNodeEntry(selectedNodes[0]));
     }
 
     // GodotObject inspectorObject = editor.GetInspector().GetEditedObject();
@@ -86,18 +109,17 @@ public partial class Bootstrap : EditorPlugin {
       if (path.Trim().EndsWith("/")) {
         return;
       }
-      _historyEntryStore.RecordEntry(CreateFileEntry(path));
+      _container.RecordEntry(CreateFileEntry(path));
     }
-
   }
 
-  private Entry CreateNodeEntry(Node obj) {
-    NodeEntry entry = new(obj);
+  private EntryModel CreateNodeEntry(Node obj) {
+    NodeEntryModel entry = new(obj);
     return entry;
   }
 
-  private Entry CreateFileEntry(string path) {
-    FileEntry entry = new(path);
+  private EntryModel CreateFileEntry(string path) {
+    FileEntryModel entry = new(path);
     return entry;
   }
 }

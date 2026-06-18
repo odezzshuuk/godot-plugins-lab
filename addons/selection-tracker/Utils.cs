@@ -49,4 +49,26 @@ public class PopupMenuHelper {
     _popupMenu?.Clear();
   }
 }
+
+public static class Utils {
+
+  public static PackedScene InstantiateTemplateScene(string templatePath, string savePath) {
+    PackedScene templateSc = GD.Load<PackedScene>(templatePath);
+    PackedScene sc = new();
+    Node root = templateSc.Instantiate();
+
+    Error packErr = sc.Pack(root);
+    if (packErr != Error.Ok) {
+      GD.PrintErr($"Failed to pack scene from template: {packErr}");
+      return null;
+    }
+
+    Error saveErr = ResourceSaver.Save(sc, savePath);
+    if (saveErr != Error.Ok) {
+      GD.PrintErr($"Failed to save scene to {savePath}: {saveErr}");
+      return null;
+    }
+    return sc;
+  }
+}
 #endif

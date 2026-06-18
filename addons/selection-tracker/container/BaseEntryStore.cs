@@ -6,18 +6,15 @@ using System;
 namespace Odezzshuuk.Editor.SelectionTracker;
 
 public interface IEntryStore {
-  Array<Entry> Entries { get; }
+  Array<EntryModel> Entries { get; }
   int CurrentSelectionIndex { get; set; }
-  void RecordEntry(Entry entry);
-  void RemoveEntry(Entry entry);
+  void RecordEntry(EntryModel entry);
+  void RemoveEntry(EntryModel entry);
 }
 
 
 [Tool]
-public abstract partial class EntryStore : Resource, IEntryStore {
-
-  [Export]
-  protected string _storePath;
+public abstract partial class EntryStore : Node, IEntryStore {
 
   public static T GetStore<T>(string path) where T : EntryStore, new() {
     if (ResourceLoader.Exists(path)) {
@@ -26,24 +23,24 @@ public abstract partial class EntryStore : Resource, IEntryStore {
       return entryStore;
     }
     T newStore = new() {
-      _storePath = path
+      // _storePath = path
     };
-    newStore.Changed += newStore.Save;
-    ResourceSaver.Save(newStore, path);
+    // newStore.Changed += newStore.Save;
+    // ResourceSaver.Save(newStore, path);
     return newStore;
   }
 
-  public abstract Array<Entry> Entries { get; }
+  public abstract Array<EntryModel> Entries { get; }
   public virtual int CurrentSelectionIndex { get; set; }
 
-  public abstract void RecordEntry(Entry entry);
-  public abstract void RemoveEntry(Entry entry);
+  public abstract void RecordEntry(EntryModel entry);
+  public abstract void RemoveEntry(EntryModel entry);
 
   private void Save() {
-    GD.Print($"[{GetType().Name}]: entry store Resource at {_storePath} saved");
-    if (ResourceSaver.Save(this, _storePath) != Error.Ok) {
-      GD.PushError($"Failed to save history entry store to '{_storePath}'");
-    }
+    // GD.Print($"[{GetType().Name}]: entry store Resource at {_storePath} saved");
+    // if (ResourceSaver.Save(this, _storePath) != Error.Ok) {
+    //   GD.PushError($"Failed to save history entry store to '{_storePath}'");
+    // }
 
   }
 

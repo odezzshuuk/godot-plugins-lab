@@ -8,21 +8,21 @@ namespace Odezzshuuk.Editor.SelectionTracker;
 [Tool]
 public partial class MostVisitedEntryStore : EntryStore {
 
-  private readonly struct EntryVisit(Entry entry, int count, int firstIndex) {
-    public Entry Entry { get; } = entry;
+  private readonly struct EntryVisit(EntryModel entry, int count, int firstIndex) {
+    public EntryModel Entry { get; } = entry;
     public int Count { get; } = count;
     public int FirstIndex { get; } = firstIndex;
   }
 
-  [Export] private Array<Entry> _slidingWindow = [];
+  [Export] private Array<EntryModel> _slidingWindow = [];
   [Export] private int _sizeLimit = 200;
 
-  public override Array<Entry> Entries {
+  public override Array<EntryModel> Entries {
     get {
       List<EntryVisit> visits = [];
 
       for (int index = 0; index < _slidingWindow.Count; index++) {
-        Entry entry = _slidingWindow[index];
+        EntryModel entry = _slidingWindow[index];
         if (entry == null) {
           continue;
         }
@@ -39,7 +39,7 @@ public partial class MostVisitedEntryStore : EntryStore {
 
       SortVisits(visits);
 
-      Array<Entry> orderedEntries = [];
+      Array<EntryModel> orderedEntries = [];
       for (int index = 0; index < visits.Count; index++) {
         orderedEntries.Add(visits[index].Entry);
       }
@@ -48,7 +48,7 @@ public partial class MostVisitedEntryStore : EntryStore {
     }
   }
 
-  public override void RecordEntry(Entry entry) {
+  public override void RecordEntry(EntryModel entry) {
     if (entry == null) {
       return;
     }
@@ -59,10 +59,9 @@ public partial class MostVisitedEntryStore : EntryStore {
       _slidingWindow.RemoveAt(0);
     }
 
-    EmitChanged();
   }
 
-  public override void RemoveEntry(Entry entry) {
+  public override void RemoveEntry(EntryModel entry) {
     bool removed = false;
     for (int index = _slidingWindow.Count - 1; index >= 0; index--) {
       if (_slidingWindow[index]?.Equals(entry) != true) {
@@ -74,11 +73,10 @@ public partial class MostVisitedEntryStore : EntryStore {
     }
 
     if (removed) {
-      EmitChanged();
     }
   }
 
-  private static int FindVisitIndex(List<EntryVisit> visits, Entry entry) {
+  private static int FindVisitIndex(List<EntryVisit> visits, EntryModel entry) {
     for (int index = 0; index < visits.Count; index++) {
       if (visits[index].Entry?.Equals(entry) == true) {
         return index;

@@ -31,7 +31,7 @@ public enum EntryState {
 /// Resources are restored from their resource path when available.
 /// </summary>
 [Tool]
-public partial class Entry : Resource, IEquatable<Entry> {
+public partial class EntryModel : Node, IEquatable<EntryModel> {
 
   [Export] protected string _cachedName;
 
@@ -44,18 +44,18 @@ public partial class Entry : Resource, IEquatable<Entry> {
 
   public virtual EntryState CurrentEntryState => EntryState.Unknown;
 
-  public Entry() { }
+  public EntryModel() { }
 
 
   public override bool Equals(object obj) {
-    return obj is Entry other && Equals(other);
+    return obj is EntryModel other && Equals(other);
   }
 
   public override int GetHashCode() {
     return HashCode.Combine(_cachedName);
   }
 
-  public virtual bool Equals(Entry other) {
+  public virtual bool Equals(EntryModel other) {
     if (other is null) {
       return false;
     }

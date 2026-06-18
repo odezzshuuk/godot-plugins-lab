@@ -6,7 +6,7 @@ using System.Linq;
 namespace Odezzshuuk.Editor.SelectionTracker;
 
 [Tool]
-public partial class NodeEntry : Entry {
+public partial class NodeEntryModel : EntryModel {
 
   [Export]
   private string _cachedNodePath;
@@ -22,6 +22,8 @@ public partial class NodeEntry : Entry {
   protected string _cachedNodeType;
 
   private Node _cachedScene;
+
+  // [Export]
   private Node _cachedNode;
 
   public override string DisplayName => _cachedNode.Name != string.Empty
@@ -46,19 +48,19 @@ public partial class NodeEntry : Entry {
     }
   }
 
-  public NodeEntry() { }
+  public NodeEntryModel() { }
 
-  public NodeEntry(Node node) {
+  public NodeEntryModel(Node node) {
     CacheNodeInfo(node);
   }
 
 
-  public override bool Equals(Entry other) {
+  public override bool Equals(EntryModel other) {
     if (!base.Equals(other)) {
       return false;
     }
 
-    if (other is not NodeEntry otherNodeEntry) {
+    if (other is not NodeEntryModel otherNodeEntry) {
       return false;
     }
 

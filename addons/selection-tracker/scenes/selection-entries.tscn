@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://cgd1b1yyey7yr"]
+
+[ext_resource type="Script" uid="uid://b8g2e0w3nongr" path="res://addons/selection-tracker/container/SelectionEntryContainer.cs" id="1_6rqay"]
+[ext_resource type="PackedScene" uid="uid://cbpdmobvempo6" path="res://addons/selection-tracker/scenes/entry.tscn" id="2_04w0y"]
+
+[node name="SelectionContainer" type="Control" unique_id=2027365665]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_6rqay")
+_entryTemplate = ExtResource("2_04w0y")

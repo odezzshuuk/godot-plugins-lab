@@ -4,7 +4,7 @@ using Godot;
 namespace Odezzshuuk.Editor.SelectionTracker;
 
 [Tool]
-public partial class FileEntry : Entry {
+public partial class FileEntryModel : EntryModel {
 
   [Export]
   private Resource _loadedResource;
@@ -23,8 +23,8 @@ public partial class FileEntry : Entry {
     }
   }
 
-  public FileEntry() { }
-  public FileEntry(string filePath) {
+  public FileEntryModel() { }
+  public FileEntryModel(string filePath) {
     EditorInterface.Singleton.GetResourceFilesystem().FilesystemChanged += FileSystemChangedCallback;
     _cachedFilePath = filePath;
     _cachedName = filePath.GetFile();
@@ -35,13 +35,13 @@ public partial class FileEntry : Entry {
   //   return obj is FileEntry other && Equals(other);
   // }
 
-  public override bool Equals(Entry other) {
+  public override bool Equals(EntryModel other) {
     // if base equality check fails, the entries are not equal
     if (!base.Equals(other)) {
       return false;
     }
 
-    if (other is not FileEntry otherFileEntry) {
+    if (other is not FileEntryModel otherFileEntry) {
       return false;
     }
 

@@ -1,6 +1,5 @@
 #if TOOLS
 using Godot;
-using System;
 
 namespace Odezzshuuk.Editor.SelectionTracker;
 
@@ -22,8 +21,8 @@ public partial class EntryControl : Control {
   [Export] private Color _defaultColor = Colors.White;
   [Export] private bool _showFavorites = true;
 
-  // [Export]
-  private Entry _entry;
+  [Export]
+  private EntryModel _entry;
 
   private EntryStore _entryStore;
 
@@ -35,15 +34,12 @@ public partial class EntryControl : Control {
 
   public EditorInterface Editor { get; set; }
 
-  public Entry Entry {
+  public EntryModel Entry {
     get => _entry;
     set => BindEntry(value);
   }
 
   public override void _EnterTree() {
-    if (!PluginHandle.Instance.IsActive) {
-      return;
-    }
     _locateButton.Pressed += OnPingPressed;
     _openButton.Pressed += OnOpenPressed;
 
@@ -60,7 +56,7 @@ public partial class EntryControl : Control {
                     .AddSeparator()
                     .AddItem("Remove All", () => {
                       GD.Print($"[{GetType().Name}] Owner: {Owner?.Name}(OwnerType: {Owner?.GetType().Name})");
-                      HistoryWindowControl control = Owner.GetNodeOrNull<HistoryWindowControl>(".");
+                      PanelControl control = Owner.GetNodeOrNull<PanelControl>(".");
                       control?.ClearEntries();
                     })
                     .ApplyTo(_contextMenu);
@@ -68,16 +64,16 @@ public partial class EntryControl : Control {
 
   }
 
-  public override void _ExitTree() {
-    try {
-
-      _locateButton.Pressed -= OnPingPressed;
-      _openButton.Pressed -= OnOpenPressed;
-      _contextMenu.IdPressed -= _popupMenuHelper.IsPressedCallback;
-    } catch (Exception ex) {
-      GD.PrintErr($"[{GetType().Name}] Error during cleanup: {ex.Message}");
-    }
-  }
+  // public override void _ExitTree() {
+  //   try {
+  //
+  //     _locateButton.Pressed -= OnPingPressed;
+  //     _openButton.Pressed -= OnOpenPressed;
+  //     _contextMenu.IdPressed -= _popupMenuHelper.IsPressedCallback;
+  //   } catch (Exception ex) {
+  //     GD.PrintErr($"[{GetType().Name}] Error during cleanup: {ex.Message}");
+  //   }
+  // }
 
   public override void _GuiInput(InputEvent @event) {
     GUIInputCallback(@event);
@@ -87,7 +83,7 @@ public partial class EntryControl : Control {
     Entry = null;
   }
 
-  private void BindEntry(Entry value) {
+  private void BindEntry(EntryModel value) {
     _entry = value;
 
     if (_entry == null) {

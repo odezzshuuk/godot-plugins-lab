@@ -1,35 +1,39 @@
 #if TOOLS
 using Godot;
+using Godot.Collections;
 using System;
 
 namespace Odezzshuuk.Editor.SelectionTracker;
 
 [Tool]
-public partial class SelectionEntryContainer : Control {
-
-  // [Export]
-  // private Array<Entry> GetChildren() = [];
+public partial class ContainerControl : Control {
 
   [Export]
   private PackedScene _entryTemplate;
 
-  // public override Array<Entry> Entries {
-  //   get {
-  //     Array<Entry> reversedEntries = GetChildren().Duplicate();
-  //     reversedEntries.Reverse();
-  //     return reversedEntries;
-  //   }
-  // }
-
   private readonly int _sizeLimit = 100;
   private int _currentSelectionIndex = -1;
 
+  // public override void _EnterTree() {
+  //   if (GetTree().EditedSceneRoot != null) {
+  //     return;
+  //   }
+  // }
+
+  public override void _Ready() {
+    EditorInterface.Singleton.GetSelection().SelectionChanged += NodeSelectionChangedCallback;
+    EditorInterface.Singleton.GetFileSystemDock().SelectionChanged += FileSystemSelectionChangedCallback;
+  }
+
+  #region entry management
   public void RecordEntry(EntryModel entry) {
     if (entry == null) {
       return;
     }
 
-    if (_currentSelectionIndex > 0 && GetChildCount() > _currentSelectionIndex && entry.Equals(GetChildren()[_currentSelectionIndex])) {
+    if (_currentSelectionIndex > 0 &&
+        GetChildCount() > _currentSelectionIndex &&
+        entry.Equals(GetChildren()[_currentSelectionIndex].GetNode<EntryControl>(".").Entry)) {
       return;
     }
 
@@ -38,11 +42,13 @@ public partial class SelectionEntryContainer : Control {
       GetChildren().RemoveAt(existingIndex);
     }
 
+    GD.Print($"[{GetType().Name}]-[EnterTree]Recording entry: {entry.DisplayName}");
     Node entryNode = _entryTemplate.Instantiate();
     EntryControl entryControl = entryNode.GetNode<EntryControl>(".");
     entryControl.Entry = entry;
 
-    GetChildren().Add(entryNode);
+    AddChild(entryNode);
+    entryNode.Owner = this;
 
     while (GetChildren().Count > _sizeLimit) {
       // remove the last
@@ -62,10 +68,6 @@ public partial class SelectionEntryContainer : Control {
   }
 
   public void RemoveAll() {
-    if (GetChildren().Count == 0) {
-      return;
-    }
-
     GetChildren().Clear();
     ResetCurrentSelection();
   }
@@ -105,6 +107,7 @@ public partial class SelectionEntryContainer : Control {
   }
 
   private int FindEntryIndex<T>(IEquatable<T> entry) {
+    GD.Print($"[{GetType().Name}]-[FindEntryIndex]entries controls is null: {GetChildren() == null}");
     for (int index = 0; index < GetChildren().Count; index++) {
       if (GetChildren()[index]?.Equals(entry) == true) {
         return index;
@@ -113,6 +116,33 @@ public partial class SelectionEntryContainer : Control {
 
     return -1;
   }
+  #endregion
+
+  private EntryModel CreateNodeEntry(Node node) {
+    return new NodeEntryModel(node);
+  }
+
+  private EntryModel CreateFileEntry(string path) {
+    return new FileEntryModel(path);
+  }
+
+  private void NodeSelectionChangedCallback() {
+    Array<Node> selectedNodes = EditorInterface.Singleton.GetSelection().GetSelectedNodes();
+    if (selectedNodes.Count > 0) {
+      RecordEntry(CreateNodeEntry(selectedNodes[0]));
+    }
+  }
+
+  private void FileSystemSelectionChangedCallback() {
+    string[] selectedPaths = EditorInterface.Singleton.GetSelectedPaths();
+    if (selectedPaths.Length > 0) {
+      string path = selectedPaths[0];
+      if (!path.Trim().EndsWith("/")) {
+        RecordEntry(CreateFileEntry(path));
+      }
+    }
+  }
+
 }
 
 

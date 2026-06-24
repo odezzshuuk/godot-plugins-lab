@@ -40,7 +40,7 @@ public class PopupMenuHelper {
     return this;
   }
 
-  public void IsPressedCallback(long id) {
+  public void InvokeCallbackById(long id) {
     _contextMenuItems[(int)id].callback?.Invoke();
   }
 
@@ -53,7 +53,7 @@ public class PopupMenuHelper {
 public static class Utils {
 
   public static PackedScene InstantiateTemplateScene(string templatePath, string savePath) {
-    PackedScene templateSc = GD.Load<PackedScene>(templatePath);
+    PackedScene templateSc = ResourceLoader.Load<PackedScene>(templatePath, cacheMode: ResourceLoader.CacheMode.Replace);
     PackedScene sc = new();
     Node root = templateSc.Instantiate();
 

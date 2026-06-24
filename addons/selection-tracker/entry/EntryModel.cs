@@ -46,7 +46,6 @@ public partial class EntryModel : Node, IEquatable<EntryModel> {
 
   public EntryModel() { }
 
-
   public override bool Equals(object obj) {
     return obj is EntryModel other && Equals(other);
   }

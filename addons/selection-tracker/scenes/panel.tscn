@@ -1,40 +1,62 @@
 [gd_scene format=3 uid="uid://dwyctw4hpp8ra"]
 
 [ext_resource type="Script" uid="uid://dgqvwia8aw81n" path="res://addons/selection-tracker/windows/PanelControl.cs" id="1_tp083"]
+[ext_resource type="Script" uid="uid://ck1fidvtvucbs" path="res://addons/selection-tracker/container/ContainerControl.cs" id="2_5c3fx"]
+[ext_resource type="PackedScene" uid="uid://cbpdmobvempo6" path="res://addons/selection-tracker/scenes/entry.tscn" id="3_tp083"]
 
-[node name="Control" type="Control" unique_id=1181782896 node_paths=PackedStringArray("_searchBar", "_contextMenu", "_containerPlaceHolder")]
+[node name="WindowRoot" type="Control" unique_id=1181782896 node_paths=PackedStringArray("_searchBar", "_contextMenu", "_containerControl")]
 layout_mode = 3
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
 grow_horizontal = 2
-grow_vertical = 2
 script = ExtResource("1_tp083")
-_searchBar = NodePath("VBoxContainer/SearchBar")
+_searchBar = NodePath("MainBox/SearchBar")
 _contextMenu = NodePath("PopupMenu")
-_containerPlaceHolder = NodePath("VBoxContainer/PlaceHolder")
+_containerControl = NodePath("MainBox/ScrollContainer/VLayout")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=331877559]
+[node name="MainBox" type="VBoxContainer" parent="." unique_id=331877559]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
+offset_bottom = 331.0
 grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 0
 
-[node name="SearchBar" type="LineEdit" parent="VBoxContainer" unique_id=1804820474]
+[node name="SearchBar" type="LineEdit" parent="MainBox" unique_id=1804820474]
 layout_mode = 2
 
-[node name="PlaceHolder" type="Node" parent="VBoxContainer" unique_id=1848996807]
+[node name="ScrollContainer" type="ScrollContainer" parent="MainBox" unique_id=339901154]
+custom_minimum_size = Vector2(300, 300)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+scroll_hint_mode = 3
+
+[node name="VLayout" type="VBoxContainer" parent="MainBox/ScrollContainer" unique_id=2058029542]
+clip_contents = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 30
+script = ExtResource("2_5c3fx")
+_entryTemplate = ExtResource("3_tp083")
+
+[node name="Entry2" parent="MainBox/ScrollContainer/VLayout" unique_id=243996738 instance=ExtResource("3_tp083")]
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="Entry3" parent="MainBox/ScrollContainer/VLayout" unique_id=1063141056 instance=ExtResource("3_tp083")]
+layout_mode = 2
+
+[node name="Entry5" parent="MainBox/ScrollContainer/VLayout" unique_id=1946592963 instance=ExtResource("3_tp083")]
+layout_mode = 2
+
+[node name="Entry4" parent="MainBox/ScrollContainer/VLayout" unique_id=1380104885 instance=ExtResource("3_tp083")]
+layout_mode = 2
 
 [node name="PopupMenu" type="PopupMenu" parent="." unique_id=2056926609]
 oversampling_override = 1.0
 size = Vector2i(167, 224)
-item_count = 3
-item_0/text = "Remove Deleted"
-item_0/id = 0
-item_1/text = "Remove Deleted"
-item_1/id = 1
-item_2/text = "Remove Deleted"
-item_2/id = 2
+
+[connection signal="id_pressed" from="PopupMenu" to="." method="ContextMenuPressedCallback"]

@@ -1,7 +1,6 @@
 #if TOOLS
 using Godot;
 using System;
-using System.Linq;
 
 namespace Odezzshuuk.Editor.SelectionTracker;
 
@@ -21,10 +20,15 @@ public partial class NodeEntryModel : EntryModel {
   [Export]
   protected string _cachedNodeType;
 
+  [Export]
+  private Node _cachedNode;
+
   private Node _cachedScene;
 
-  // [Export]
-  private Node _cachedNode;
+  private SceneTree _cachedSceneTree;
+
+  private EntryState _currentEntryState;
+
 
   public override string DisplayName => _cachedNode.Name != string.Empty
     ? _cachedNode.Name
@@ -32,26 +36,15 @@ public partial class NodeEntryModel : EntryModel {
       ? _cachedName
       : $"Missing Node ({_cachedNodeType})";
 
-  public override EntryState CurrentEntryState {
-    get {
-      GD.Print($"Checking entry state for NodeEntry: {_cachedNode.Name}");
-      if (!_cachedNode.IsQueuedForDeletion()) {
-        GD.Print($"Node {_cachedNode.Name} is no longer valid. Marking as Deleted.");
-        return EntryState.Deleted;
-      }
-
-      if (EditorInterface.Singleton.GetOpenScenes().Contains(_cachedScenePath)) {
-        return EntryState.Loaded;
-      } else {
-        return EntryState.Unloaded;
-      }
-    }
-  }
+  public override EntryState CurrentEntryState => _currentEntryState;
 
   public NodeEntryModel() { }
 
   public NodeEntryModel(Node node) {
     CacheNodeInfo(node);
+    node.GetTree().NodeRemoved += NodeRemovedCallback;
+    node.GetTree().SceneChanged += SceneChangedCallback;
+
   }
 
 
@@ -100,11 +93,14 @@ public partial class NodeEntryModel : EntryModel {
     _cachedNodePath = node.IsInsideTree() ? node.GetPath() : string.Empty;
     _cachedScenePath = GetScenePath(node);
     _cachedSceneFileName = _cachedScenePath.GetFile();
+    _cachedSceneTree = node.GetTree();
     _cachedScene = node.Owner;
     _cachedName = string.Concat(_cachedSceneFileName, "/", node.Name);
     _cachedNodeType = node.GetType().Name;
+
     _cachedIcon = EditorInterface.Singleton.GetBaseControl().GetThemeIcon("File", "EditorIcons");
     _instanceId = node.GetInstanceId();
+    _currentEntryState = EntryState.Loaded;
   }
 
   protected string GetScenePath(Node node) {
@@ -120,6 +116,18 @@ public partial class NodeEntryModel : EntryModel {
       }
     }
     return string.Empty;
+  }
+
+  private void NodeRemovedCallback(Node node) {
+    if (node == _cachedNode) {
+      _currentEntryState = EntryState.Deleted;
+    }
+  }
+
+  private void SceneChangedCallback() {
+    if (_cachedScene != _cachedSceneTree.CurrentScene) {
+      _currentEntryState = EntryState.Unloaded;
+    }
   }
 
 }

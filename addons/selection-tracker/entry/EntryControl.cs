@@ -40,8 +40,6 @@ public partial class EntryControl : Control {
   }
 
   public override void _EnterTree() {
-    _locateButton.Pressed += OnPingPressed;
-    _openButton.Pressed += OnOpenPressed;
 
     Texture2D searchIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Search", "EditorIcons");
     _locateButton.Icon = searchIcon;
@@ -54,26 +52,9 @@ public partial class EntryControl : Control {
                     .AddItem("Option 1", () => GD.Print("Option 1 selected"))
                     .AddItem("Option 2", () => GD.Print("Option 2 selected"))
                     .AddSeparator()
-                    .AddItem("Remove All", () => {
-                      GD.Print($"[{GetType().Name}] Owner: {Owner?.Name}(OwnerType: {Owner?.GetType().Name})");
-                      PanelControl control = Owner.GetNodeOrNull<PanelControl>(".");
-                      control?.ClearEntries();
-                    })
+                    .AddItem("Remove All", GetParent().GetNode<ContainerControl>(".").GetChildren().Clear)
                     .ApplyTo(_contextMenu);
-    _contextMenu.IdPressed += _popupMenuHelper.IsPressedCallback;
-
   }
-
-  // public override void _ExitTree() {
-  //   try {
-  //
-  //     _locateButton.Pressed -= OnPingPressed;
-  //     _openButton.Pressed -= OnOpenPressed;
-  //     _contextMenu.IdPressed -= _popupMenuHelper.IsPressedCallback;
-  //   } catch (Exception ex) {
-  //     GD.PrintErr($"[{GetType().Name}] Error during cleanup: {ex.Message}");
-  //   }
-  // }
 
   public override void _GuiInput(InputEvent @event) {
     GUIInputCallback(@event);
@@ -98,7 +79,6 @@ public partial class EntryControl : Control {
     _entryIcon.Texture = _entry.Icon;
     _entryIcon.Visible = _entry.Icon != null;
 
-    GD.Print($"Binding entry: {_entry.DisplayName} with state: {_entry.CurrentEntryState}");
     bool hideOpen = _entry.CurrentEntryState.HasFlag(EntryState.Accessible);
     _openButton.Visible = hideOpen;
   }
@@ -116,7 +96,6 @@ public partial class EntryControl : Control {
       return;
     }
 
-    GD.Print($"Mouse Pressed input event: {@event} triggered");
     if (mouseButton.ButtonIndex == MouseButton.Left) {
       if (mouseButton.DoubleClick) {
         _entry.Open();
@@ -129,24 +108,14 @@ public partial class EntryControl : Control {
     }
 
     if (mouseButton.ButtonIndex == MouseButton.Right) {
-      GD.Print($"Right-clicked on entry: {_entry.DisplayName}");
       _contextMenu.Position = DisplayServer.MouseGetPosition();
       _contextMenu.Popup();
       AcceptEvent();
     }
   }
 
-  private void OnPingPressed() {
-    _entry?.Locate();
-  }
-
-  private void OnOpenPressed() {
-    _entry?.Open();
-  }
 
   private void SetTextStyle() {
-    GD.Print($"TextStyle entry is null: {_entry == null}");
-
     EntryState state = _entry
       .CurrentEntryState;
 
@@ -164,6 +133,18 @@ public partial class EntryControl : Control {
       _entryNameLabel.Modulate = _loadedColor;
       _entryNameLabel.Text = _entry.DisplayName;
     }
+  }
+
+  private void LocatePressedCallback() {
+    _entry?.Locate();
+  }
+
+  private void OpenPressedCallback() {
+    _entry?.Open();
+  }
+
+  private void ContextMenuIdPressedCallback(int id) {
+    _popupMenuHelper.InvokeCallbackById(id);
   }
 }
 #endif

@@ -19,6 +19,10 @@ public class PluginHandle {
   public Node panelNode;
   public Node containerNode;
 
+  public void ClearAll() {
+    containerNode.GetChildren().Clear();
+  }
+
 }
 
 #endif

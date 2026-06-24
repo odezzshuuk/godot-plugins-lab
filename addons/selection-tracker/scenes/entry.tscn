@@ -27,7 +27,7 @@ corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 corner_detail = 20
 
-[sub_resource type="DPITexture" id="DPITexture_pkl7x"]
+[sub_resource type="DPITexture" id="DPITexture_qfrfo"]
 _source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><path fill=\"#e0e0e0\" d=\"M2 2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-4a1 1 0 0 1-1-1V3a1 1 0 0 0-1-1z\"/></svg>
 "
 saturation = 2.0
@@ -37,7 +37,7 @@ Color(0.37254903, 1, 0.5921569, 1): Color(0.45, 0.95, 0.5, 1),
 Color(1, 0.8666667, 0.39607844, 1): Color(0.83, 0.78, 0.62, 1)
 }
 
-[sub_resource type="DPITexture" id="DPITexture_ahlup"]
+[sub_resource type="DPITexture" id="DPITexture_3c20q"]
 _source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><path fill=\"#e0e0e0\" d=\"M10.168 8.754a5 5 0 1 0-1.414 1.414l4.316 4.316 1.414-1.414zM6 3a3 3 0 0 1 0 6 3 3 0 0 1 0-6z\"/></svg>
 "
 saturation = 2.0
@@ -49,13 +49,8 @@ Color(1, 0.8666667, 0.39607844, 1): Color(0.83, 0.78, 0.62, 1)
 
 [node name="Entry" type="Control" unique_id=258251935 node_paths=PackedStringArray("_entryNameLabel", "_entryIcon", "_locateButton", "_openButton", "_contextMenu")]
 layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_right = 200.0
-offset_bottom = -618.0
-grow_horizontal = 2
-grow_vertical = 2
+anchors_preset = 0
+size_flags_horizontal = 3
 script = ExtResource("1_qfrfo")
 _entryNameLabel = NodePath("RootBox/BoxMargin/HSplitContainer/EntryInfoContainer/RichTextLabel")
 _entryIcon = NodePath("RootBox/BoxMargin/HSplitContainer/EntryInfoContainer/MarginContainer/TextureRect")
@@ -66,11 +61,9 @@ _contextMenu = NodePath("ContextMenu")
 [node name="RootBox" type="Panel" parent="." unique_id=874239484]
 custom_minimum_size = Vector2(100, 30)
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
 grow_horizontal = 2
-grow_vertical = 2
 mouse_filter = 1
 theme_override_styles/panel = SubResource("StyleBoxFlat_v0srd")
 
@@ -128,7 +121,7 @@ theme_override_constants/icon_max_width = 12
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_pv4it")
 text = "Open"
-icon = SubResource("DPITexture_pkl7x")
+icon = SubResource("DPITexture_qfrfo")
 
 [node name="Locate" type="Button" parent="RootBox/BoxMargin/HSplitContainer/ButtonContainer" unique_id=1379081736]
 layout_mode = 2
@@ -137,12 +130,12 @@ theme_override_constants/outline_size = 1
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_pv4it")
 text = "Locate"
-icon = SubResource("DPITexture_ahlup")
+icon = SubResource("DPITexture_3c20q")
 
 [node name="ContextMenu" type="PopupMenu" parent="." unique_id=2113863971]
 oversampling_override = 1.0
 size = Vector2i(126, 100)
-item_count = 30
+item_count = 15
 item_0/text = "Remove"
 item_0/id = 0
 item_1/text = "Option 1"
@@ -173,33 +166,8 @@ item_13/id = -1
 item_13/separator = true
 item_14/text = "Remove All"
 item_14/id = 14
-item_15/text = "Remove"
-item_15/id = 15
-item_16/text = "Option 1"
-item_16/id = 16
-item_17/text = "Option 2"
-item_17/id = 17
-item_18/id = -1
-item_18/separator = true
-item_19/text = "Remove All"
-item_19/id = 19
-item_20/text = "Remove"
-item_20/id = 20
-item_21/text = "Option 1"
-item_21/id = 21
-item_22/text = "Option 2"
-item_22/id = 22
-item_23/id = -1
-item_23/separator = true
-item_24/text = "Remove All"
-item_24/id = 24
-item_25/text = "Remove"
-item_25/id = 25
-item_26/text = "Option 1"
-item_26/id = 26
-item_27/text = "Option 2"
-item_27/id = 27
-item_28/id = -1
-item_28/separator = true
-item_29/text = "Remove All"
-item_29/id = 29
+
+[connection signal="pressed" from="RootBox/BoxMargin/HSplitContainer/ButtonContainer/Open" to="." method="OpenPressedCallback"]
+[connection signal="pressed" from="RootBox/BoxMargin/HSplitContainer/ButtonContainer/Locate" to="." method="_on_locate_pressed"]
+[connection signal="pressed" from="RootBox/BoxMargin/HSplitContainer/ButtonContainer/Locate" to="." method="LocatePressedCallback"]
+[connection signal="id_pressed" from="ContextMenu" to="." method="ContextMenuIdPressedCallback"]

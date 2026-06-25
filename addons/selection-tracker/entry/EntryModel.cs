@@ -38,13 +38,15 @@ public partial class EntryModel : Node, IEquatable<EntryModel> {
   [Export] protected Texture2D _cachedIcon;
   [Export] protected EntryState _cachedRefState = EntryState.Unknown;
 
-
+  public virtual Variant Ref { get; private set; }
   public virtual string DisplayName => _cachedName ?? $"Unnamed {GetType().Name}" ?? "Empty";
   public Texture2D Icon => _cachedIcon;
 
-  public virtual EntryState CurrentEntryState => EntryState.Unknown;
-
-  public EntryModel() { }
+  public virtual EntryState CurrentEntryState {
+    get => _cachedRefState;
+    set => _cachedRefState = value;
+  }
+  public Action<EntryState> onStateUpdated;
 
   public override bool Equals(object obj) {
     return obj is EntryModel other && Equals(other);
@@ -74,6 +76,11 @@ public partial class EntryModel : Node, IEquatable<EntryModel> {
 
   public virtual GodotObject ResolveReference() { return null; }
 
+  #region Debugging
+  public override string ToString() {
+    return $"EntryModel: {DisplayName},\nState: {CurrentEntryState}";
+  }
+  #endregion
 
 }
 #endif

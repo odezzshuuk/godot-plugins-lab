@@ -38,21 +38,22 @@ public partial class ContainerControl : Control {
     }
 
     int existingIndex = FindEntryIndex(entry);
+    GD.Print($"Recording entry: {entry.DisplayName}, existing index: {existingIndex}");
     if (existingIndex != -1) {
-      GetChildren().RemoveAt(existingIndex);
+      RemoveChild(GetChildren()[existingIndex]);
     }
 
-    GD.Print($"[{GetType().Name}]-[EnterTree]Recording entry: {entry.DisplayName}");
     Node entryNode = _entryTemplate.Instantiate();
     EntryControl entryControl = entryNode.GetNode<EntryControl>(".");
     entryControl.Entry = entry;
 
     AddChild(entryNode);
+    MoveChild(entryNode, 0);
     entryNode.Owner = this;
 
     while (GetChildren().Count > _sizeLimit) {
       // remove the last
-      GetChildren().RemoveAt(GetChildren().Count - 1);
+      RemoveChild(GetChildren()[GetChildren().Count - 1]);
     }
 
     ResetCurrentSelection();
@@ -64,11 +65,15 @@ public partial class ContainerControl : Control {
       return;
     }
 
-    GetChildren().RemoveAt(existingIndex);
+    RemoveChild(GetChildren()[existingIndex]);
   }
 
   public void RemoveAll() {
-    GetChildren().Clear();
+
+    foreach (Node child in GetChildren()) {
+      child.QueueFree();
+    }
+
     ResetCurrentSelection();
   }
 
@@ -107,9 +112,8 @@ public partial class ContainerControl : Control {
   }
 
   private int FindEntryIndex<T>(IEquatable<T> entry) {
-    GD.Print($"[{GetType().Name}]-[FindEntryIndex]entries controls is null: {GetChildren() == null}");
     for (int index = 0; index < GetChildren().Count; index++) {
-      if (GetChildren()[index]?.Equals(entry) == true) {
+      if (GetChildren()[index]?.GetNode<EntryControl>(".").Entry?.Equals(entry) == true) {
         return index;
       }
     }
@@ -129,6 +133,7 @@ public partial class ContainerControl : Control {
   private void NodeSelectionChangedCallback() {
     Array<Node> selectedNodes = EditorInterface.Singleton.GetSelection().GetSelectedNodes();
     if (selectedNodes.Count > 0) {
+      GD.Print($"Selected node type is {selectedNodes[0].GetClass()}");
       RecordEntry(CreateNodeEntry(selectedNodes[0]));
     }
   }
@@ -144,6 +149,4 @@ public partial class ContainerControl : Control {
   }
 
 }
-
-
 #endif

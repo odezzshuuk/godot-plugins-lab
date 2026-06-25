@@ -25,9 +25,11 @@ public partial class Bootstrap : EditorPlugin {
       AvailableLayouts = EditorDock.DockLayout.Horizontal | EditorDock.DockLayout.Floating
     };
 
-    _pluginDock.AddChild(panelNode);
 
+    _pluginDock.AddChild(panelNode);
     AddDock(_pluginDock);
+
+    SceneChanged += (scene) => _pluginHandle.onSelectedSceneChanged?.Invoke(scene);
   }
 
   public override void _DisablePlugin() {

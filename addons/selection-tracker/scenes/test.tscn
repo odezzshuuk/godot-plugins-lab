@@ -56,3 +56,15 @@ layout_mode = 2
 text = "Detail"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="PopupLabel3" type="Label" parent="EntryRoot/PopupDetail" unique_id=2114300459]
+layout_mode = 2
+text = "Detail"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PopupLabel4" type="Label" parent="EntryRoot/PopupDetail" unique_id=1248357501]
+layout_mode = 2
+text = "Detail"
+horizontal_alignment = 1
+vertical_alignment = 1

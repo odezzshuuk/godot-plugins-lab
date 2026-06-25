@@ -31,6 +31,10 @@ public partial class PanelControl : Control {
     _contextMenu.Clear();
     _popupMenuHelper.AddItem("Remove Deleted", () => GD.Print("Remove Deleted callback invoked"))
                     .AddItem("Remove All", () => _containerControl.GetChildren().Clear())
+                    .AddSeparator()
+                    .AddItem("Tree Root Scene", () => GD.Print(GetTree().EditedSceneRoot.Name))
+                    .AddItem("Current Scene", () => GD.Print(GetTree().CurrentScene.Name))
+                    .AddItem("Edited Scene", () => GD.Print(EditorInterface.Singleton.GetEditedSceneRoot().Name))
                     .ApplyTo(_contextMenu);
   }
 

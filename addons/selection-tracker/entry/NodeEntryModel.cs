@@ -23,28 +23,30 @@ public partial class NodeEntryModel : EntryModel {
   [Export]
   private Node _cachedNode;
 
-  private Node _cachedScene;
+  private Node _cachedOwner;
 
   private SceneTree _cachedSceneTree;
 
-  private EntryState _currentEntryState;
-
-
+  public override Variant Ref => _cachedNode;
   public override string DisplayName => _cachedNode.Name != string.Empty
     ? _cachedNode.Name
     : _cachedName != string.Empty
       ? _cachedName
       : $"Missing Node ({_cachedNodeType})";
 
-  public override EntryState CurrentEntryState => _currentEntryState;
+  public override EntryState CurrentEntryState {
+    get => _cachedRefState;
+    set {
+      _cachedRefState = value;
+      onStateUpdated.Invoke(value);
+    }
+  }
 
   public NodeEntryModel() { }
-
   public NodeEntryModel(Node node) {
     CacheNodeInfo(node);
     node.GetTree().NodeRemoved += NodeRemovedCallback;
-    node.GetTree().SceneChanged += SceneChangedCallback;
-
+    PluginHandle.Instance.onSelectedSceneChanged += SelectedSceneChangedCallback;
   }
 
 
@@ -66,9 +68,6 @@ public partial class NodeEntryModel : EntryModel {
   }
 
   public override void Locate() {
-    if (_cachedNode == null) {
-      return;
-    }
     EditorInterface.Singleton.EditNode(_cachedNode);
   }
 
@@ -91,16 +90,15 @@ public partial class NodeEntryModel : EntryModel {
   protected void CacheNodeInfo(Node node) {
     _cachedNode = node;
     _cachedNodePath = node.IsInsideTree() ? node.GetPath() : string.Empty;
-    _cachedScenePath = GetScenePath(node);
-    _cachedSceneFileName = _cachedScenePath.GetFile();
+    _cachedScenePath = GetScenePath(node); _cachedSceneFileName = _cachedScenePath.GetFile();
     _cachedSceneTree = node.GetTree();
-    _cachedScene = node.Owner;
+    _cachedOwner = node.Owner;
     _cachedName = string.Concat(_cachedSceneFileName, "/", node.Name);
     _cachedNodeType = node.GetType().Name;
 
-    _cachedIcon = EditorInterface.Singleton.GetBaseControl().GetThemeIcon("File", "EditorIcons");
+    _cachedIcon = EditorInterface.Singleton.GetBaseControl().GetThemeIcon(node.GetClass(), "EditorIcons");
     _instanceId = node.GetInstanceId();
-    _currentEntryState = EntryState.Loaded;
+    _cachedRefState = EntryState.Loaded;
   }
 
   protected string GetScenePath(Node node) {
@@ -119,16 +117,37 @@ public partial class NodeEntryModel : EntryModel {
   }
 
   private void NodeRemovedCallback(Node node) {
+    // GD.Print($"Cached Scene: {_cachedScene.Name}, Edited Scene: {_cachedSceneTree.EditedSceneRoot.Name}");
     if (node == _cachedNode) {
-      _currentEntryState = EntryState.Deleted;
+      if (EditorInterface.Singleton.GetEditedSceneRoot() == _cachedOwner) {
+        CurrentEntryState = EntryState.Deleted;
+      } else {
+        CurrentEntryState = EntryState.Unloaded;
+      }
     }
   }
 
-  private void SceneChangedCallback() {
-    if (_cachedScene != _cachedSceneTree.CurrentScene) {
-      _currentEntryState = EntryState.Unloaded;
+  private void SelectedSceneChangedCallback(Node node) {
+    if (node == _cachedOwner) {
+      CurrentEntryState = EntryState.Loaded;
     }
   }
+
+  #region debugging
+  public override string ToString() {
+    return $"""
+    ----------- EntryModel Debug Info -----------
+      NodeEntryModel: {_cachedName},
+      NodePath: {_cachedNodePath},
+      ScenePath: {_cachedScenePath},
+      CachedScene: {_cachedOwner?.Name},
+      EditedSceneTreeRoot: {_cachedSceneTree?.EditedSceneRoot.Name},
+      EditedSceneRoot: {EditorInterface.Singleton.GetEditedSceneRoot()?.Name},
+    """;
+    // CurrentScene: {_cachedSceneTree?.CurrentScene.Name}
+
+  }
+  #endregion
 
 }
 #endif

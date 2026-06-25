@@ -9,6 +9,7 @@ layout_mode = 3
 anchors_preset = 10
 anchor_right = 1.0
 grow_horizontal = 2
+size_flags_horizontal = 3
 script = ExtResource("1_tp083")
 _searchBar = NodePath("MainBox/SearchBar")
 _contextMenu = NodePath("PopupMenu")
@@ -41,19 +42,6 @@ size_flags_vertical = 3
 theme_override_constants/separation = 30
 script = ExtResource("2_5c3fx")
 _entryTemplate = ExtResource("3_tp083")
-
-[node name="Entry2" parent="MainBox/ScrollContainer/VLayout" unique_id=243996738 instance=ExtResource("3_tp083")]
-layout_mode = 2
-size_flags_vertical = 4
-
-[node name="Entry3" parent="MainBox/ScrollContainer/VLayout" unique_id=1063141056 instance=ExtResource("3_tp083")]
-layout_mode = 2
-
-[node name="Entry5" parent="MainBox/ScrollContainer/VLayout" unique_id=1946592963 instance=ExtResource("3_tp083")]
-layout_mode = 2
-
-[node name="Entry4" parent="MainBox/ScrollContainer/VLayout" unique_id=1380104885 instance=ExtResource("3_tp083")]
-layout_mode = 2
 
 [node name="PopupMenu" type="PopupMenu" parent="." unique_id=2056926609]
 oversampling_override = 1.0

@@ -3,7 +3,6 @@ using Godot;
 
 namespace Odezzshuuk.Editor.SelectionTracker;
 
-
 [Tool]
 public partial class EntryControl : Control {
 
@@ -13,6 +12,7 @@ public partial class EntryControl : Control {
   [Export] private Button _locateButton;
   [Export] private Button _openButton;
   [Export] private PopupMenu _contextMenu;
+  [Export] private PackedScene _dragPreview;
 
   [ExportGroup("Style")]
   [Export] private Color _loadedColor = Colors.White;
@@ -23,8 +23,6 @@ public partial class EntryControl : Control {
 
   [Export]
   private EntryModel _entry;
-
-  private EntryStore _entryStore;
 
   private readonly PopupMenuHelper _popupMenuHelper = new();
 
@@ -48,47 +46,39 @@ public partial class EntryControl : Control {
     _openButton.Icon = openIcon;
 
     _contextMenu.Clear();
-    _popupMenuHelper.AddItem("Remove", () => GD.Print($"Requesting removal of entry: {_entry.DisplayName}"))
-                    .AddItem("Option 1", () => GD.Print("Option 1 selected"))
-                    .AddItem("Option 2", () => GD.Print("Option 2 selected"))
+    _popupMenuHelper.AddItem("Remove All", RemoveAllEntries)
+                    .AddItem("Remove", () => GD.Print($"Requesting removal of entry: {_entry.DisplayName}"))
                     .AddSeparator()
-                    .AddItem("Remove All", GetParent().GetNode<ContainerControl>(".").GetChildren().Clear)
+                    .AddItem("Get State", () => GD.Print($"Entry state: {_entry.CurrentEntryState}"))
+                    .AddItem("Entry Info", () => GD.Print(_entry))
                     .ApplyTo(_contextMenu);
+    // GetParent().PrintTreePretty();
   }
+
 
   public override void _GuiInput(InputEvent @event) {
     GUIInputCallback(@event);
   }
 
-  public void Reset() {
-    Entry = null;
+  public override Variant _GetDragData(Vector2 position) {
+    string dragData = $"EntryControl: {_entry.DisplayName}";
+    Node root = _dragPreview.Instantiate();
+    DragPreviewControl dragPreview = root.GetNode<DragPreviewControl>(".");
+    dragPreview.PreviewData = _entry;
+    SetDragPreview(dragPreview);
+    return _entry;
   }
 
   private void BindEntry(EntryModel value) {
     _entry = value;
-
-    if (_entry == null) {
-      _entryNameLabel.Text = string.Empty;
-      _entryIcon.Texture = null;
-      _entryIcon.Visible = false;
-      _openButton.Visible = false;
-      return;
-    }
-
-    SetTextStyle();
     _entryIcon.Texture = _entry.Icon;
     _entryIcon.Visible = _entry.Icon != null;
-
     bool hideOpen = _entry.CurrentEntryState.HasFlag(EntryState.Accessible);
     _openButton.Visible = hideOpen;
-  }
+    _entryNameLabel.Modulate = _loadedColor;
+    _entryNameLabel.Text = _entry.DisplayName;
 
-  private void AppendPopupMenu(PopupMenu menu) {
-    menu.AddItem("Remove");
-    menu.AddItem("Option 1");
-    menu.AddItem("Option 2");
-    menu.AddSeparator();
-    menu.AddItem("Remove All");
+    _entry.onStateUpdated += StateUpdatedCallback;
   }
 
   private void GUIInputCallback(InputEvent @event) {
@@ -114,10 +104,25 @@ public partial class EntryControl : Control {
     }
   }
 
+  private void RemoveAllEntries() {
+    foreach (Node child in GetParent().GetNode<ContainerControl>(".").GetChildren()) {
+      child.QueueFree();
+    }
+  }
 
-  private void SetTextStyle() {
-    EntryState state = _entry
-      .CurrentEntryState;
+  private void LocatePressedCallback() {
+    _entry.Locate();
+  }
+
+  private void OpenPressedCallback() {
+    _entry.Open();
+  }
+
+  private void ContextMenuIdPressedCallback(int id) {
+    _popupMenuHelper.InvokeCallbackById(id);
+  }
+
+  private void StateUpdatedCallback(EntryState state) {
 
     if (state.HasFlag(EntryState.Deleted) || state.HasFlag(EntryState.Freed)) {
       _entryNameLabel.Modulate = _deletedColor;
@@ -133,18 +138,6 @@ public partial class EntryControl : Control {
       _entryNameLabel.Modulate = _loadedColor;
       _entryNameLabel.Text = _entry.DisplayName;
     }
-  }
-
-  private void LocatePressedCallback() {
-    _entry?.Locate();
-  }
-
-  private void OpenPressedCallback() {
-    _entry?.Open();
-  }
-
-  private void ContextMenuIdPressedCallback(int id) {
-    _popupMenuHelper.InvokeCallbackById(id);
   }
 }
 #endif

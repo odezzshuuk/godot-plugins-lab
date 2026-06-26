@@ -7,32 +7,21 @@ namespace Odezzshuuk.Editor.SelectionTracker;
 [Tool]
 public partial class NodeEntryModel : EntryModel {
 
-  [Export]
-  private string _cachedNodePath;
-  [Export]
-  private string _cachedSceneFileName;
-  [Export]
-  private string _cachedScenePath;
+  [Export] private string _cachedNodePath;
+  [Export] private string _cachedSceneFileName;
+  [Export] private string _cachedScenePath;
 
   [Export]
   protected ulong _instanceId;  // session-only
 
-  [Export]
-  protected string _cachedNodeType;
-
-  [Export]
-  private Node _cachedNode;
-
-  private Node _cachedOwner;
+  [Export] protected string _cachedNodeType;
+  [Export] private Node _cachedNode;
+  [Export] private Node _cachedOwner;
 
   private SceneTree _cachedSceneTree;
 
-  public override Variant Ref => _cachedNode;
-  public override string DisplayName => _cachedNode.Name != string.Empty
-    ? _cachedNode.Name
-    : _cachedName != string.Empty
-      ? _cachedName
-      : $"Missing Node ({_cachedNodeType})";
+  // public override Variant Ref => _cachedNode;
+  public override string DisplayName => string.Concat(_cachedSceneFileName, "/", _cachedNode.Name);
 
   public override EntryState CurrentEntryState {
     get => _cachedRefState;
@@ -46,6 +35,7 @@ public partial class NodeEntryModel : EntryModel {
   public NodeEntryModel(Node node) {
     CacheNodeInfo(node);
     node.GetTree().NodeRemoved += NodeRemovedCallback;
+    // node.GetTree().NodeRenamed += NodeRenamedCallback;
     PluginHandle.Instance.onSelectedSceneChanged += SelectedSceneChangedCallback;
   }
 
@@ -59,8 +49,7 @@ public partial class NodeEntryModel : EntryModel {
       return false;
     }
 
-    return otherNodeEntry._cachedNode == _cachedNode ||
-      otherNodeEntry._instanceId == _instanceId;
+    return otherNodeEntry._cachedNode == _cachedNode || otherNodeEntry._instanceId == _instanceId;
   }
 
   public override int GetHashCode() {
@@ -79,12 +68,15 @@ public partial class NodeEntryModel : EntryModel {
 
     if (CurrentEntryState.HasFlag(EntryState.Unloaded)) {
       editor.OpenSceneFromPath(_cachedScenePath);
-      // TODO: restore node here ...
       editor.GetSelection().Clear();
       editor.GetSelection().AddNode(_cachedNode);
       editor.EditNode(_cachedNode);
       return;
     }
+  }
+
+  public override Variant GetRef() {
+    return _cachedNode;
   }
 
   protected void CacheNodeInfo(Node node) {
@@ -93,12 +85,14 @@ public partial class NodeEntryModel : EntryModel {
     _cachedScenePath = GetScenePath(node); _cachedSceneFileName = _cachedScenePath.GetFile();
     _cachedSceneTree = node.GetTree();
     _cachedOwner = node.Owner;
-    _cachedName = string.Concat(_cachedSceneFileName, "/", node.Name);
     _cachedNodeType = node.GetType().Name;
 
     _cachedIcon = EditorInterface.Singleton.GetBaseControl().GetThemeIcon(node.GetClass(), "EditorIcons");
     _instanceId = node.GetInstanceId();
     _cachedRefState = EntryState.Loaded;
+
+    _dragPayloadType = "nodes";
+    _dragPayloadData = _cachedNodePath;
   }
 
   protected string GetScenePath(Node node) {
@@ -117,7 +111,6 @@ public partial class NodeEntryModel : EntryModel {
   }
 
   private void NodeRemovedCallback(Node node) {
-    // GD.Print($"Cached Scene: {_cachedScene.Name}, Edited Scene: {_cachedSceneTree.EditedSceneRoot.Name}");
     if (node == _cachedNode) {
       if (EditorInterface.Singleton.GetEditedSceneRoot() == _cachedOwner) {
         CurrentEntryState = EntryState.Deleted;
@@ -125,6 +118,9 @@ public partial class NodeEntryModel : EntryModel {
         CurrentEntryState = EntryState.Unloaded;
       }
     }
+  }
+
+  private void NodeRenamedCallback(Node node) {
   }
 
   private void SelectedSceneChangedCallback(Node node) {
@@ -137,7 +133,7 @@ public partial class NodeEntryModel : EntryModel {
   public override string ToString() {
     return $"""
     ----------- EntryModel Debug Info -----------
-      NodeEntryModel: {_cachedName},
+      NodeEntryModel: {_cachedNode.Name},
       NodePath: {_cachedNodePath},
       ScenePath: {_cachedScenePath},
       CachedScene: {_cachedOwner?.Name},

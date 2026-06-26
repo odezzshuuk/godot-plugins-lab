@@ -1,5 +1,6 @@
 #if TOOLS
 using Godot;
+using Godot.Collections;
 
 namespace Odezzshuuk.Editor.SelectionTracker;
 
@@ -7,19 +8,20 @@ namespace Odezzshuuk.Editor.SelectionTracker;
 public partial class EntryControl : Control {
 
   [ExportGroup("References")]
-  [Export] private RichTextLabel _entryNameLabel;
-  [Export] private TextureRect _entryIcon;
+  [Export]
+  private RichTextLabel _entryNameLabel;
+  [Export]
+  private TextureRect _entryIcon;
   [Export] private Button _locateButton;
   [Export] private Button _openButton;
   [Export] private PopupMenu _contextMenu;
-  [Export] private PackedScene _dragPreview;
+  [Export] private PackedScene _dragPreviewTemplate;
 
   [ExportGroup("Style")]
   [Export] private Color _loadedColor = Colors.White;
   [Export] private Color _unloadedColor = new(0.85f, 0.73f, 0.33f);
   [Export] private Color _deletedColor = new(0.92f, 0.42f, 0.42f);
   [Export] private Color _defaultColor = Colors.White;
-  [Export] private bool _showFavorites = true;
 
   [Export]
   private EntryModel _entry;
@@ -52,21 +54,56 @@ public partial class EntryControl : Control {
                     .AddItem("Get State", () => GD.Print($"Entry state: {_entry.CurrentEntryState}"))
                     .AddItem("Entry Info", () => GD.Print(_entry))
                     .ApplyTo(_contextMenu);
-    // GetParent().PrintTreePretty();
   }
 
 
   public override void _GuiInput(InputEvent @event) {
-    GUIInputCallback(@event);
+    if (_entry == null || @event is not InputEventMouseButton mouseButton) {
+      return;
+    }
+
+    if (mouseButton.ButtonIndex == MouseButton.Left) {
+      if (mouseButton.DoubleClick) {
+        _entry.Open();
+        AcceptEvent();
+      }
+      if (!mouseButton.Pressed) {  // released
+        _entry.Locate();
+        AcceptEvent();
+      }
+      return;
+    }
+
+    if (mouseButton.ButtonIndex == MouseButton.Right) {
+      _contextMenu.Position = DisplayServer.MouseGetPosition();
+      _contextMenu.Popup();
+      AcceptEvent();
+    }
   }
 
   public override Variant _GetDragData(Vector2 position) {
-    string dragData = $"EntryControl: {_entry.DisplayName}";
-    Node root = _dragPreview.Instantiate();
+    var dragData = new Dictionary { };
+    Node root = _dragPreviewTemplate.Instantiate();
     DragPreviewControl dragPreview = root.GetNode<DragPreviewControl>(".");
     dragPreview.PreviewData = _entry;
     SetDragPreview(dragPreview);
-    return _entry;
+
+    switch (_entry.DragPayloadType) {
+      case "nodes":
+        dragData["type"] = "nodes";
+        dragData["nodes"] = new[] { _entry.DragPayloadData };
+        GD.Print($"Dragging NodePath: {_entry.GetRef()}");
+        break;
+      case "files":
+        dragData["type"] = "files";
+        dragData["files"] = new[] { _entry.DragPayloadData };
+        break;
+      default:
+        GD.PrintErr($"Unknown drag payload type: {_entry.DragPayloadType}");
+        break;
+    }
+
+    return dragData;
   }
 
   private void BindEntry(EntryModel value) {
@@ -79,29 +116,6 @@ public partial class EntryControl : Control {
     _entryNameLabel.Text = _entry.DisplayName;
 
     _entry.onStateUpdated += StateUpdatedCallback;
-  }
-
-  private void GUIInputCallback(InputEvent @event) {
-    if (_entry == null || @event is not InputEventMouseButton mouseButton || !mouseButton.Pressed) {
-      return;
-    }
-
-    if (mouseButton.ButtonIndex == MouseButton.Left) {
-      if (mouseButton.DoubleClick) {
-        _entry.Open();
-      } else {
-        _entry.Locate();
-      }
-
-      AcceptEvent();
-      return;
-    }
-
-    if (mouseButton.ButtonIndex == MouseButton.Right) {
-      _contextMenu.Position = DisplayServer.MouseGetPosition();
-      _contextMenu.Popup();
-      AcceptEvent();
-    }
   }
 
   private void RemoveAllEntries() {

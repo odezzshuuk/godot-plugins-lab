@@ -38,7 +38,6 @@ public partial class ContainerControl : Control {
     }
 
     int existingIndex = FindEntryIndex(entry);
-    GD.Print($"Recording entry: {entry.DisplayName}, existing index: {existingIndex}");
     if (existingIndex != -1) {
       RemoveChild(GetChildren()[existingIndex]);
     }
@@ -133,7 +132,6 @@ public partial class ContainerControl : Control {
   private void NodeSelectionChangedCallback() {
     Array<Node> selectedNodes = EditorInterface.Singleton.GetSelection().GetSelectedNodes();
     if (selectedNodes.Count > 0) {
-      GD.Print($"Selected node type is {selectedNodes[0].GetClass()}");
       RecordEntry(CreateNodeEntry(selectedNodes[0]));
     }
   }

@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bcqk2lejfobno" path="res://addons/selection-tracker/entry/EntryControl.cs" id="1_qfrfo"]
 [ext_resource type="Texture2D" uid="uid://k2ge4rlr1eod" path="res://icon.svg" id="2_3c20q"]
+[ext_resource type="PackedScene" uid="uid://bfsofpvyoh700" path="res://addons/selection-tracker/scenes/drag-preview.tscn" id="2_pkl7x"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_v0srd"]
 bg_color = Color(0.1, 0.1, 0.1, 1)
@@ -27,7 +28,7 @@ corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 corner_detail = 20
 
-[sub_resource type="DPITexture" id="DPITexture_qfrfo"]
+[sub_resource type="DPITexture" id="DPITexture_ahlup"]
 _source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><path fill=\"#e0e0e0\" d=\"M2 2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-4a1 1 0 0 1-1-1V3a1 1 0 0 0-1-1z\"/></svg>
 "
 saturation = 2.0
@@ -37,7 +38,7 @@ Color(0.37254903, 1, 0.5921569, 1): Color(0.45, 0.95, 0.5, 1),
 Color(1, 0.8666667, 0.39607844, 1): Color(0.83, 0.78, 0.62, 1)
 }
 
-[sub_resource type="DPITexture" id="DPITexture_3c20q"]
+[sub_resource type="DPITexture" id="DPITexture_e63qp"]
 _source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><path fill=\"#e0e0e0\" d=\"M10.168 8.754a5 5 0 1 0-1.414 1.414l4.316 4.316 1.414-1.414zM6 3a3 3 0 0 1 0 6 3 3 0 0 1 0-6z\"/></svg>
 "
 saturation = 2.0
@@ -57,6 +58,7 @@ _entryIcon = NodePath("RootBox/BoxMargin/HSplitContainer/EntryInfoContainer/Marg
 _locateButton = NodePath("RootBox/BoxMargin/HSplitContainer/ButtonContainer/Locate")
 _openButton = NodePath("RootBox/BoxMargin/HSplitContainer/ButtonContainer/Open")
 _contextMenu = NodePath("ContextMenu")
+_dragPreviewTemplate = ExtResource("2_pkl7x")
 
 [node name="RootBox" type="Panel" parent="." unique_id=874239484]
 custom_minimum_size = Vector2(100, 30)
@@ -121,7 +123,7 @@ theme_override_constants/outline_size = 1
 theme_override_constants/icon_max_width = 12
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_pv4it")
-icon = SubResource("DPITexture_qfrfo")
+icon = SubResource("DPITexture_ahlup")
 
 [node name="Locate" type="Button" parent="RootBox/BoxMargin/HSplitContainer/ButtonContainer" unique_id=1379081736]
 layout_mode = 2
@@ -130,12 +132,12 @@ tooltip_text = "Locate"
 theme_override_constants/outline_size = 1
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_pv4it")
-icon = SubResource("DPITexture_3c20q")
+icon = SubResource("DPITexture_e63qp")
 
 [node name="ContextMenu" type="PopupMenu" parent="." unique_id=2113863971]
 oversampling_override = 1.0
 size = Vector2i(126, 100)
-item_count = 25
+item_count = 10
 item_0/text = "Remove All"
 item_0/id = 0
 item_1/text = "Remove"
@@ -156,36 +158,6 @@ item_8/text = "Get State"
 item_8/id = 8
 item_9/text = "Entry Info"
 item_9/id = 9
-item_10/text = "Remove All"
-item_10/id = 10
-item_11/text = "Remove"
-item_11/id = 11
-item_12/id = -1
-item_12/separator = true
-item_13/text = "Get State"
-item_13/id = 13
-item_14/text = "Entry Info"
-item_14/id = 14
-item_15/text = "Remove All"
-item_15/id = 15
-item_16/text = "Remove"
-item_16/id = 16
-item_17/id = -1
-item_17/separator = true
-item_18/text = "Get State"
-item_18/id = 18
-item_19/text = "Entry Info"
-item_19/id = 19
-item_20/text = "Remove All"
-item_20/id = 20
-item_21/text = "Remove"
-item_21/id = 21
-item_22/id = -1
-item_22/separator = true
-item_23/text = "Get State"
-item_23/id = 23
-item_24/text = "Entry Info"
-item_24/id = 24
 
 [connection signal="pressed" from="RootBox/BoxMargin/HSplitContainer/ButtonContainer/Open" to="." method="OpenPressedCallback"]
 [connection signal="pressed" from="RootBox/BoxMargin/HSplitContainer/ButtonContainer/Locate" to="." method="_on_locate_pressed"]

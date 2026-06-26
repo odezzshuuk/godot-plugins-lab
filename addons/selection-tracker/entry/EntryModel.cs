@@ -33,27 +33,28 @@ public enum EntryState {
 [Tool]
 public partial class EntryModel : Node, IEquatable<EntryModel> {
 
-  [Export] protected string _cachedName;
-
   [Export] protected Texture2D _cachedIcon;
   [Export] protected EntryState _cachedRefState = EntryState.Unknown;
+  [Export] protected Variant _ref;
 
-  public virtual Variant Ref { get; private set; }
-  public virtual string DisplayName => _cachedName ?? $"Unnamed {GetType().Name}" ?? "Empty";
+  protected string _dragPayloadType;
+  protected string _dragPayloadData;
+
+  public virtual string DisplayName => "Empty";
   public Texture2D Icon => _cachedIcon;
 
   public virtual EntryState CurrentEntryState {
     get => _cachedRefState;
     set => _cachedRefState = value;
   }
+
+  public string DragPayloadType => _dragPayloadType;
+  public string DragPayloadData => _dragPayloadData;
+
   public Action<EntryState> onStateUpdated;
 
   public override bool Equals(object obj) {
     return obj is EntryModel other && Equals(other);
-  }
-
-  public override int GetHashCode() {
-    return HashCode.Combine(_cachedName);
   }
 
   public virtual bool Equals(EntryModel other) {
@@ -74,7 +75,9 @@ public partial class EntryModel : Node, IEquatable<EntryModel> {
     Locate();
   }
 
-  public virtual GodotObject ResolveReference() { return null; }
+  public virtual Variant GetRef() {
+    return _ref;
+  }
 
   #region Debugging
   public override string ToString() {

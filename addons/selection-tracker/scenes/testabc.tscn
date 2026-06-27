@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://djs6oc4v3q8na"]
+[gd_scene format=3 uid="uid://fhjfcg4sr35t"]
 
 [node name="EntryElement" type="Control" unique_id=1413667408]
 custom_minimum_size = Vector2(0, 28)
@@ -51,13 +51,13 @@ layout_mode = 2
 visible = false
 layout_mode = 2
 
-[node name="PopupLabel" type="Label" parent="EntryRoot/PopupDetail" unique_id=1403120107]
+[node name="anotherpanel" type="Label" parent="EntryRoot/PopupDetail" unique_id=1403120107]
 layout_mode = 2
 text = "Detail"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="PopupLabel3" type="Label" parent="EntryRoot/PopupDetail" unique_id=2114300459]
+[node name="neop" type="Label" parent="EntryRoot/PopupDetail" unique_id=2114300459]
 layout_mode = 2
 text = "Detail"
 horizontal_alignment = 1

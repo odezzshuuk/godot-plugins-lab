@@ -8,6 +8,7 @@ public partial class FileEntryModel : EntryModel {
 
   [Export] private Resource _cachedResource;
   [Export] private string _cachedFilePath;
+  [Export] private long _cachedResourceUid;
 
   // public override Variant Ref => _cachedResource;
   public override string DisplayName => _cachedFilePath.GetFile();
@@ -16,7 +17,7 @@ public partial class FileEntryModel : EntryModel {
     get => _cachedRefState;
     set {
       _cachedRefState = value;
-      onStateUpdated.Invoke(value);
+      onUpdated.Invoke();
     }
   }
 
@@ -28,6 +29,7 @@ public partial class FileEntryModel : EntryModel {
     _cachedIcon = EditorInterface.Singleton.GetBaseControl().GetThemeIcon(ft, "EditorIcons");
     _cachedRefState = EntryState.Existed;
     _cachedResource = ResourceLoader.Load(filePath);
+    _cachedResourceUid = ResourceLoader.GetResourceUid(filePath);
 
     _dragPayloadType = "files";
     _dragPayloadData = filePath;
@@ -40,9 +42,6 @@ public partial class FileEntryModel : EntryModel {
   public override bool Equals(EntryModel other) {
     // if base equality check fails, the entries are not equal
     if (!base.Equals(other)) {
-      if (other.DisplayName == "entry.tscn" && DisplayName == "entry.tscn") {
-        GD.Print("base check: Should be equal");
-      }
       return false;
     }
 
@@ -68,23 +67,17 @@ public partial class FileEntryModel : EntryModel {
     EditorInterface.Singleton.EditResource(_cachedResource);
   }
 
-  public override Variant GetRef() {
-    return _cachedResource;
-  }
-
-  protected long GetResourceUid(string resourcePath) {
-    return string.IsNullOrEmpty(resourcePath)
-      ? -1
-      : ResourceLoader.GetResourceUid(resourcePath);
-  }
-
-
   private void FileSystemChangedCallback() {
+    string path = ResourceUid.Singleton.GetIdPath(_cachedResourceUid);
+    _cachedFilePath = path;
+
     if (FileAccess.FileExists(_cachedFilePath)) {
       CurrentEntryState = EntryState.Existed;
     } else {
       CurrentEntryState = EntryState.Deleted;
     }
+
+    onUpdated.Invoke();
   }
 }
 #endif

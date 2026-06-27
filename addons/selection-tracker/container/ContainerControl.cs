@@ -27,10 +27,6 @@ public partial class ContainerControl : Control {
 
   #region entry management
   public void RecordEntry(EntryModel entry) {
-    if (entry == null) {
-      return;
-    }
-
     if (_currentSelectionIndex > 0 &&
         GetChildCount() > _currentSelectionIndex &&
         entry.Equals(GetChildren()[_currentSelectionIndex].GetNode<EntryControl>(".").Entry)) {
@@ -56,6 +52,7 @@ public partial class ContainerControl : Control {
     }
 
     ResetCurrentSelection();
+    GD.Print($"Children count: {GetChildren().Count}");
   }
 
   public void RemoveEntry(EntryModel entry) {

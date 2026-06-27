@@ -51,9 +51,13 @@ public partial class EntryControl : Control {
     _popupMenuHelper.AddItem("Remove All", RemoveAllEntries)
                     .AddItem("Remove", () => GD.Print($"Requesting removal of entry: {_entry.DisplayName}"))
                     .AddSeparator()
-                    .AddItem("Get State", () => GD.Print($"Entry state: {_entry.CurrentEntryState}"))
                     .AddItem("Entry Info", () => GD.Print(_entry))
                     .ApplyTo(_contextMenu);
+  }
+
+  public override void _Ready() {
+    PluginHandle.Instance.onSearchTextChanged += SearchTextChangedCallback;
+
   }
 
 
@@ -92,7 +96,6 @@ public partial class EntryControl : Control {
       case "nodes":
         dragData["type"] = "nodes";
         dragData["nodes"] = new[] { _entry.DragPayloadData };
-        GD.Print($"Dragging NodePath: {_entry.GetRef()}");
         break;
       case "files":
         dragData["type"] = "files";
@@ -115,7 +118,7 @@ public partial class EntryControl : Control {
     _entryNameLabel.Modulate = _loadedColor;
     _entryNameLabel.Text = _entry.DisplayName;
 
-    _entry.onStateUpdated += StateUpdatedCallback;
+    _entry.onUpdated += UpdatedCallback;
   }
 
   private void RemoveAllEntries() {
@@ -136,7 +139,8 @@ public partial class EntryControl : Control {
     _popupMenuHelper.InvokeCallbackById(id);
   }
 
-  private void StateUpdatedCallback(EntryState state) {
+  private void UpdatedCallback() {
+    EntryState state = _entry.CurrentEntryState;
 
     if (state.HasFlag(EntryState.Deleted) || state.HasFlag(EntryState.Freed)) {
       _entryNameLabel.Modulate = _deletedColor;
@@ -152,6 +156,18 @@ public partial class EntryControl : Control {
       _entryNameLabel.Modulate = _loadedColor;
       _entryNameLabel.Text = _entry.DisplayName;
     }
+  }
+
+  private void SearchTextChangedCallback(string searchText) {
+    if (string.IsNullOrEmpty(searchText)) {
+      Visible = true;
+      return;
+    }
+
+    string entryText = _entryNameLabel.Text.ToLower();
+    string searchLower = searchText.ToLower();
+
+    Visible = entryText.Contains(searchLower);
   }
 }
 #endif

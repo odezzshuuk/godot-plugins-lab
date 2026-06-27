@@ -35,7 +35,6 @@ public partial class EntryModel : Node, IEquatable<EntryModel> {
 
   [Export] protected Texture2D _cachedIcon;
   [Export] protected EntryState _cachedRefState = EntryState.Unknown;
-  [Export] protected Variant _ref;
 
   protected string _dragPayloadType;
   protected string _dragPayloadData;
@@ -51,11 +50,7 @@ public partial class EntryModel : Node, IEquatable<EntryModel> {
   public string DragPayloadType => _dragPayloadType;
   public string DragPayloadData => _dragPayloadData;
 
-  public Action<EntryState> onStateUpdated;
-
-  public override bool Equals(object obj) {
-    return obj is EntryModel other && Equals(other);
-  }
+  public Action onUpdated;
 
   public virtual bool Equals(EntryModel other) {
     if (other is null) {
@@ -69,14 +64,18 @@ public partial class EntryModel : Node, IEquatable<EntryModel> {
     return other.GetType() == GetType();
   }
 
+  public override bool Equals(object obj) {
+    return obj is EntryModel other && Equals(other);
+  }
+
+  public override int GetHashCode() {
+    return HashCode.Combine(GetType());
+  }
+
   public virtual void Locate() { }
 
   public virtual void Open() {
     Locate();
-  }
-
-  public virtual Variant GetRef() {
-    return _ref;
   }
 
   #region Debugging

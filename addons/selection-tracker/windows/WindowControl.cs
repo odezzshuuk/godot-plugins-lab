@@ -5,7 +5,7 @@ using System;
 namespace Odezzshuuk.Editor.SelectionTracker;
 
 [Tool]
-public partial class PanelControl : Control {
+public partial class WindowControl : Control {
 
   [Export]
   private LineEdit _searchBar;
@@ -16,27 +16,28 @@ public partial class PanelControl : Control {
   [Export]
   private Node _containerControl;
 
-  private readonly PopupMenuHelper _popupMenuHelper = new();
-
-  [Signal]
-  public delegate void SearchTextChangedEventHandler();
+  private PopupMenuHelper _popupMenuHelper;
 
   public (int id, string text, bool isSeparator, Action callback)[] ContextMenuItems { get; private set; }
 
-  public override void _EnterTree() {
-    if (GetTree().EditedSceneRoot != null) {
-      return;
+  public override void _Ready() {
+    void RemoveAllEntries() {
+      foreach (Node child in _containerControl.GetChildren()) {
+        child.QueueFree();
+      }
     }
-
+    // GD.Print("PanelControl _EnterTree invoked");
     _contextMenu.Clear();
+    _popupMenuHelper = new PopupMenuHelper();
     _popupMenuHelper.AddItem("Remove Deleted", () => GD.Print("Remove Deleted callback invoked"))
-                    .AddItem("Remove All", () => _containerControl.GetChildren().Clear())
+                    .AddItem("Remove All", RemoveAllEntries)
                     .AddSeparator()
                     .AddItem("Tree Root Scene", () => GD.Print(GetTree().EditedSceneRoot.Name))
                     .AddItem("Current Scene", () => GD.Print(GetTree().CurrentScene.Name))
                     .AddItem("Edited Scene", () => GD.Print(EditorInterface.Singleton.GetEditedSceneRoot().Name))
                     .ApplyTo(_contextMenu);
   }
+
 
   public override void _GuiInput(InputEvent @event) {
     if (@event is InputEventMouseButton mouseEvent) {
@@ -58,6 +59,10 @@ public partial class PanelControl : Control {
 
   private void ContextMenuPressedCallback(long id) {
     _popupMenuHelper.InvokeCallbackById(id);
+  }
+
+  private void textChangedCallback(string text) {
+    PluginHandle.Instance.onSearchTextChanged?.Invoke(text);
   }
 
   private void StoreChangedCallback() {

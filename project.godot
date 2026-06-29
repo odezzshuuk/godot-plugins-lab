@@ -1,0 +1,43 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="godot-plugins-lab"
+config/features=PackedStringArray("4.6", "C#", "Forward Plus")
+config/icon="res://icon.svg"
+
+[autoload]
+
+CrashMessageHelper="*uid://bwwdxepa4qhic"
+
+[debug]
+
+settings/stdout/verbose_stdout=true
+
+[display]
+
+window/size/viewport_width=250
+
+[dotnet]
+
+project/assembly_name="godot-plugins-lab"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/selection-tracker/plugin.cfg")
+
+[physics]
+
+3d/physics_engine="Jolt Physics"
+
+[rendering]
+
+rendering_device/driver.windows="d3d12"
